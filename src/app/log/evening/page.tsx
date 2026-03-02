@@ -19,11 +19,15 @@ export default async function EveningPage({
       <div>
         <h1 className="text-xl font-bold">夜の記録</h1>
         <p className="text-sm text-text-muted">
-          {date === today ? "今日" : formatDateJP(date)}の振り返りを記録しよう
+          {formatDateJP(date)}の日中のストレスや、寝る前の習慣を記録
         </p>
       </div>
 
       <DateNav date={date} today={today} />
+
+      <p className="rounded-xl bg-surface px-3 py-2 text-xs text-text-muted">
+        0時を過ぎても寝る前なら、まだこの日の夜ログでOK
+      </p>
 
       <EveningForm
         date={date}

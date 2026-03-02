@@ -22,7 +22,9 @@ export default async function MorningPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold">朝の記録</h1>
-        <p className="text-sm text-text-muted">すっきり度を記録しよう</p>
+        <p className="text-sm text-text-muted">
+          {formatDateJP(date)}の朝、起きたときのすっきり度
+        </p>
       </div>
 
       <DateNav date={date} today={today} />
@@ -31,7 +33,7 @@ export default async function MorningPage({
 
       <div className="space-y-3">
         <h2 className="text-sm font-medium text-text-muted">
-          {date === today ? "今朝" : formatDateJP(date)}のすっきり度は？
+          起きたときの気分は？
         </h2>
         <MorningForm
           date={date}
