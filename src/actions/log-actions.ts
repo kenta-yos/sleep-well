@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { dailyLogs } from "@/lib/db/schema";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 export async function saveFreshnessScore(date: string, score: number) {
   await db
@@ -52,5 +52,29 @@ export async function saveEveningLog(
         updatedAt: sql`now()`,
       },
     });
+  return { ok: true };
+}
+
+export async function clearFreshnessScore(date: string) {
+  await db
+    .update(dailyLogs)
+    .set({ freshnessScore: null, updatedAt: new Date() })
+    .where(eq(dailyLogs.date, date));
+  return { ok: true };
+}
+
+export async function clearEveningLog(date: string) {
+  await db
+    .update(dailyLogs)
+    .set({
+      stressScore: null,
+      stressSources: null,
+      lateScreen: false,
+      alcohol: false,
+      exercise: false,
+      note: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(dailyLogs.date, date));
   return { ok: true };
 }

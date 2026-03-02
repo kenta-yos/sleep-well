@@ -30,6 +30,7 @@ export default async function EveningPage({
       </p>
 
       <EveningForm
+        key={date}
         date={date}
         initialData={
           dailyLog

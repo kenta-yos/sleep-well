@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { EmojiPicker } from "@/components/log/emoji-picker";
+import { useRouter } from "next/navigation";
 import { StressSources } from "@/components/log/stress-sources";
 import { HabitToggle } from "@/components/log/habit-toggle";
-import { saveEveningLog } from "@/actions/log-actions";
+import { Spinner } from "@/components/ui/spinner";
+import { saveEveningLog, clearEveningLog } from "@/actions/log-actions";
 
 const stressLevels = [
   { score: 1, emoji: "😌", label: "なし" },
@@ -42,6 +43,7 @@ export function EveningForm({
   );
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
     setData((prev) => ({ ...prev, [key]: value }));
@@ -59,9 +61,7 @@ export function EveningForm({
     <div className="space-y-6">
       {/* Stress Score */}
       <div className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">
-          今日のストレス度
-        </h2>
+        <h2 className="text-sm font-medium text-text-muted">ストレス度</h2>
         <div className="flex items-center justify-between gap-2">
           {stressLevels.map(({ score, emoji, label }) => (
             <button
@@ -96,7 +96,7 @@ export function EveningForm({
 
       {/* Habits */}
       <div className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">今日の生活習慣</h2>
+        <h2 className="text-sm font-medium text-text-muted">生活習慣</h2>
         <div className="flex flex-wrap gap-2">
           <HabitToggle
             label="スマホ遅い"
@@ -135,16 +135,39 @@ export function EveningForm({
       <button
         onClick={handleSave}
         disabled={isPending}
-        className="w-full rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-70"
       >
+        {isPending && <Spinner className="text-white" />}
         {isPending ? "保存中..." : "保存する"}
       </button>
 
-      {saved && (
-        <p className="text-center text-sm text-accent-green">
-          保存しました
-        </p>
-      )}
+      <div className="flex items-center justify-center gap-3">
+        {saved && !isPending && (
+          <p className="text-sm text-accent-green">保存しました</p>
+        )}
+        {initialData && !isPending && (
+          <button
+            onClick={() => {
+              startTransition(async () => {
+                await clearEveningLog(date);
+                setData({
+                  stressScore: 3,
+                  stressSources: [],
+                  lateScreen: false,
+                  alcohol: false,
+                  exercise: false,
+                  note: "",
+                });
+                setSaved(false);
+                router.refresh();
+              });
+            }}
+            className="text-xs text-text-muted underline"
+          >
+            夜ログを取り消す
+          </button>
+        )}
+      </div>
     </div>
   );
 }

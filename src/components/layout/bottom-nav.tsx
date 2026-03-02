@@ -20,19 +20,11 @@ export function BottomNav() {
 
   function getHref(href: string) {
     if (href === "/log") {
-      const hour = getJSTHour();
-      if (dateParam) {
-        const base = hour < 12 ? "/log/morning" : "/log/evening";
-        return `${base}?date=${dateParam}`;
+      // 0-4am JST: default to yesterday's log
+      if (!dateParam && getJSTHour() < 4) {
+        return `/log?date=${getYesterdayDateStr()}`;
       }
-      // 0-4am JST: probably still up from yesterday → evening log for yesterday
-      if (hour < 4) {
-        return `/log/evening?date=${getYesterdayDateStr()}`;
-      }
-      // 4-12 JST: morning log for today
-      if (hour < 12) return "/log/morning";
-      // 12+ JST: evening log for today
-      return "/log/evening";
+      return dateParam ? `/log?date=${dateParam}` : "/log";
     }
     if (href === "/" && dateParam) {
       return `/?date=${dateParam}`;

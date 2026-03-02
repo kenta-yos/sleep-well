@@ -134,28 +134,22 @@ export default async function HomePage({
       {/* Log status */}
       <div className="space-y-2">
         <h2 className="text-sm font-medium text-text-muted">この日のログ</h2>
-        <div className="flex gap-3">
-          <Link
-            href={`/log/morning${dateQuery}`}
-            className={`flex-1 rounded-xl border p-3 text-center text-sm transition-colors ${
-              hasMorningLog
-                ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
-                : "border-border bg-surface text-text-muted hover:border-primary"
-            }`}
+        <Link
+          href={`/log${dateQuery}`}
+          className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-hover"
+        >
+          <span
+            className={`flex-1 text-center text-sm ${hasMorningLog ? "text-accent-green" : "text-text-muted"}`}
           >
-            {hasMorningLog ? "朝ログ済み" : "朝ログ未記入"}
-          </Link>
-          <Link
-            href={`/log/evening${dateQuery}`}
-            className={`flex-1 rounded-xl border p-3 text-center text-sm transition-colors ${
-              hasEveningLog
-                ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
-                : "border-border bg-surface text-text-muted hover:border-primary"
-            }`}
+            朝 {hasMorningLog ? "済み" : "未記入"}
+          </span>
+          <span className="text-border">|</span>
+          <span
+            className={`flex-1 text-center text-sm ${hasEveningLog ? "text-accent-green" : "text-text-muted"}`}
           >
-            {hasEveningLog ? "夜ログ済み" : "夜ログ未記入"}
-          </Link>
-        </div>
+            夜 {hasEveningLog ? "済み" : "未記入"}
+          </span>
+        </Link>
       </div>
     </div>
   );

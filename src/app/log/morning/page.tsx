@@ -36,6 +36,7 @@ export default async function MorningPage({
           起きたときの気分は？
         </h2>
         <MorningForm
+          key={date}
           date={date}
           initialScore={dailyLog?.freshnessScore ?? null}
         />
