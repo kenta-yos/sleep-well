@@ -38,7 +38,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
       </head>
       <body className="min-h-dvh antialiased">
-        <main className="mx-auto max-w-lg px-4 pb-24 pt-6">{children}</main>
+        <main className="mx-auto max-w-lg px-4 pb-24 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]">{children}</main>
         <BottomNav />
         <SWRegister />
       </body>
