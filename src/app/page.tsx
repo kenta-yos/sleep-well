@@ -8,15 +8,23 @@ import {
   getSleepRecordCount,
 } from "@/lib/db/queries";
 import { StatCard } from "@/components/ui/stat-card";
+import { DateNav } from "@/components/ui/date-nav";
 import { SleepSummaryCard } from "@/components/log/sleep-summary-card";
 import { generateNightlyTips } from "@/lib/rules";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
+  const { date: dateParam } = await searchParams;
   const today = getTodayJST();
-  const [todaySleep, todayLog, recentSleep, recentLogs, totalCount] =
+  const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
+
+  const [daySleep, dayLog, recentSleep, recentLogs, totalCount] =
     await Promise.all([
-      getSleepRecordByDate(today),
-      getDailyLogByDate(today),
+      getSleepRecordByDate(date),
+      getDailyLogByDate(date),
       getRecentSleepRecords(7),
       getRecentDailyLogs(7),
       getSleepRecordCount(),
@@ -71,16 +79,19 @@ export default async function HomePage() {
 
   const tips = generateNightlyTips(recentSleep, recentLogs);
 
-  // Log status
-  const hasMorningLog = todayLog?.freshnessScore != null;
-  const hasEveningLog = todayLog?.stressScore != null;
+  // Log status for selected date
+  const hasMorningLog = dayLog?.freshnessScore != null;
+  const hasEveningLog = dayLog?.stressScore != null;
+  const dateQuery = date !== today ? `?date=${date}` : "";
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Sleep Well</h1>
 
-      {/* Today's sleep */}
-      <SleepSummaryCard record={todaySleep} />
+      <DateNav date={date} today={today} />
+
+      {/* This day's sleep */}
+      <SleepSummaryCard record={daySleep} />
 
       {/* Week stats */}
       <div className="grid grid-cols-3 gap-3">
@@ -104,8 +115,8 @@ export default async function HomePage() {
         />
       </div>
 
-      {/* Tonight's tips */}
-      {tips.length > 0 && (
+      {/* Tonight's tips (only show for today) */}
+      {date === today && tips.length > 0 && (
         <div className="rounded-2xl border border-accent-yellow/30 bg-accent-yellow/5 p-4">
           <h2 className="mb-2 text-sm font-medium text-accent-yellow">
             今夜のおすすめ
@@ -122,10 +133,10 @@ export default async function HomePage() {
 
       {/* Log status */}
       <div className="space-y-2">
-        <h2 className="text-sm font-medium text-text-muted">今日のログ</h2>
+        <h2 className="text-sm font-medium text-text-muted">この日のログ</h2>
         <div className="flex gap-3">
           <Link
-            href="/log/morning"
+            href={`/log/morning${dateQuery}`}
             className={`flex-1 rounded-xl border p-3 text-center text-sm transition-colors ${
               hasMorningLog
                 ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
@@ -135,7 +146,7 @@ export default async function HomePage() {
             {hasMorningLog ? "朝ログ済み" : "朝ログ未記入"}
           </Link>
           <Link
-            href="/log/evening"
+            href={`/log/evening${dateQuery}`}
             className={`flex-1 rounded-xl border p-3 text-center text-sm transition-colors ${
               hasEveningLog
                 ? "border-accent-green/30 bg-accent-green/10 text-accent-green"

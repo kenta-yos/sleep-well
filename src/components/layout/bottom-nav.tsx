@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "ホーム", icon: HomeIcon },
@@ -12,8 +12,22 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
 
   if (pathname === "/login") return null;
+
+  function getHref(href: string) {
+    if (href === "/log") {
+      const hour = new Date().getHours();
+      const base = hour < 12 ? "/log/morning" : "/log/evening";
+      return dateParam ? `${base}?date=${dateParam}` : base;
+    }
+    if (href === "/" && dateParam) {
+      return `/?date=${dateParam}`;
+    }
+    return href;
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-surface/95 backdrop-blur-md">
@@ -26,7 +40,7 @@ export function BottomNav() {
           return (
             <Link
               key={href}
-              href={href === "/log" ? getLogHref() : href}
+              href={getHref(href)}
               className={`flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-0.5 px-3 py-2 text-xs transition-colors ${
                 isActive ? "text-primary" : "text-text-muted"
               }`}
@@ -39,11 +53,6 @@ export function BottomNav() {
       </div>
     </nav>
   );
-}
-
-function getLogHref() {
-  const hour = new Date().getHours();
-  return hour < 12 ? "/log/morning" : "/log/evening";
 }
 
 function HomeIcon({ className }: { className?: string }) {

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SWRegister } from "@/components/layout/sw-register";
@@ -39,7 +40,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-dvh antialiased">
         <main className="mx-auto max-w-lg px-4 pb-24 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]">{children}</main>
-        <BottomNav />
+        <Suspense>
+          <BottomNav />
+        </Suspense>
         <SWRegister />
       </body>
     </html>
