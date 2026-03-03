@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTodayJST, formatDateJP } from "@/lib/date-utils";
 import { getSleepRecordByDate, getDailyLogByDate } from "@/lib/db/queries";
 import { SleepSummaryCard } from "@/components/log/sleep-summary-card";
@@ -40,6 +41,13 @@ export default async function LogPage({
           date={date}
           initialScore={dailyLog?.freshnessScore ?? null}
         />
+
+        <Link
+          href={`/log/morning${date !== today ? `?date=${date}` : ""}`}
+          className="block text-center text-xs text-primary underline"
+        >
+          睡眠データも手入力する →
+        </Link>
       </section>
 
       <hr className="border-border" />

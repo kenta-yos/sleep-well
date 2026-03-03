@@ -1,8 +1,8 @@
 import { getTodayJST, formatDateJP } from "@/lib/date-utils";
 import { getSleepRecordByDate, getDailyLogByDate } from "@/lib/db/queries";
-import { SleepSummaryCard } from "@/components/log/sleep-summary-card";
 import { DateNav } from "@/components/ui/date-nav";
-import { MorningForm } from "./morning-form";
+import { MorningWizard } from "./morning-wizard";
+import { timestampToTime } from "@/lib/sleep-utils";
 
 export default async function MorningPage({
   searchParams,
@@ -11,36 +11,37 @@ export default async function MorningPage({
 }) {
   const { date: dateParam } = await searchParams;
   const today = getTodayJST();
-  const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
+  const date =
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
   const [sleepRecord, dailyLog] = await Promise.all([
     getSleepRecordByDate(date),
     getDailyLogByDate(date),
   ]);
 
+  const initialData = {
+    freshnessScore: dailyLog?.freshnessScore ?? null,
+    bedtime: timestampToTime(sleepRecord?.bedtime ?? null),
+    wakeTime: timestampToTime(sleepRecord?.wakeTime ?? null),
+    totalSleepMinutes: sleepRecord?.totalSleepMinutes ?? null,
+    deepMinutes: sleepRecord?.deepMinutes ?? null,
+    lightMinutes: sleepRecord?.lightMinutes ?? null,
+    remMinutes: sleepRecord?.remMinutes ?? null,
+    avgHeartRate: sleepRecord?.avgHeartRate ?? null,
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold">朝の記録</h1>
         <p className="text-sm text-text-muted">
-          {formatDateJP(date)}の朝、起きたときのすっきり度
+          {formatDateJP(date)}の睡眠データを入力
         </p>
       </div>
 
       <DateNav date={date} today={today} />
 
-      <SleepSummaryCard record={sleepRecord} />
-
-      <div className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">
-          起きたときの気分は？
-        </h2>
-        <MorningForm
-          key={date}
-          date={date}
-          initialScore={dailyLog?.freshnessScore ?? null}
-        />
-      </div>
+      <MorningWizard key={date} date={date} initialData={initialData} />
     </div>
   );
 }
