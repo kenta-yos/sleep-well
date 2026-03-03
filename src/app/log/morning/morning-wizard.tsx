@@ -126,9 +126,9 @@ export function MorningWizard({
       <div className="flex-1 py-6">
         <div className="wizard-slide" key={step}>
           {step === 0 && <StepFreshness data={data} update={update} />}
-          {step === 1 && <StepBedtime data={data} update={update} />}
-          {step === 2 && <StepTotalSleep data={data} update={update} />}
-          {step === 3 && <StepStages data={data} update={update} />}
+          {step === 1 && <StepTotalSleep data={data} update={update} />}
+          {step === 2 && <StepStages data={data} update={update} />}
+          {step === 3 && <StepBedtime data={data} update={update} />}
           {step === 4 && <StepHeartRate data={data} update={update} />}
           {step === 5 && <StepConfirm data={data} />}
         </div>
@@ -249,7 +249,7 @@ function StepTotalSleep({
         onChange={(v) => update("totalSleepMinutes", v)}
         min={60}
         max={720}
-        step={15}
+        step={5}
         label="睡眠時間"
         formatValue={formatMinutesAsHM}
       />
