@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -42,25 +42,26 @@ export function DateNav({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isToday = date === today;
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   function navigate(newDate: string) {
-    setLoading(true);
-    const params = new URLSearchParams(searchParams.toString());
-    if (newDate === today) {
-      params.delete("date");
-    } else {
-      params.set("date", newDate);
-    }
-    const qs = params.toString();
-    router.push(`${pathname}${qs ? `?${qs}` : ""}`);
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (newDate === today) {
+        params.delete("date");
+      } else {
+        params.set("date", newDate);
+      }
+      const qs = params.toString();
+      router.push(`${pathname}${qs ? `?${qs}` : ""}`);
+    });
   }
 
   return (
     <div className="flex items-center justify-between">
       <button
         onClick={() => navigate(shiftDate(date, -1))}
-        disabled={loading}
+        disabled={isPending}
         className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-text-muted transition-colors hover:bg-surface disabled:opacity-50"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -69,7 +70,7 @@ export function DateNav({
       </button>
 
       <div className="text-center">
-        {loading ? (
+        {isPending ? (
           <Spinner className="text-primary" />
         ) : (
           <>
@@ -81,7 +82,7 @@ export function DateNav({
 
       <button
         onClick={() => navigate(shiftDate(date, 1))}
-        disabled={isToday || loading}
+        disabled={isToday || isPending}
         className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-text-muted transition-colors hover:bg-surface disabled:opacity-30"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
