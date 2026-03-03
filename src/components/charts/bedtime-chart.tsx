@@ -49,6 +49,10 @@ function formatDuration(bedNM: number, wakeNM: number): string {
 const IDEAL_BED = (24 - PIVOT_HOUR) * 60; // 360
 const IDEAL_WAKE = (8 + 24 - PIVOT_HOUR) * 60; // 840
 
+// Minimum display range: 22:00 ~ 10:00
+const AXIS_MIN = (22 - PIVOT_HOUR) * 60; // 240 = 22:00
+const AXIS_MAX = (10 + 24 - PIVOT_HOUR) * 60; // 960 = 10:00
+
 export function BedtimeChart({ data }: { data: DataPoint[] }) {
   const chartData = data
     .filter((d) => d.bedtime && d.wakeTime)
@@ -84,8 +88,8 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
             <YAxis
               tick={{ fontSize: 10, fill: "#888" }}
               domain={[
-                (dataMin: number) => Math.min(dataMin, IDEAL_BED) - 30,
-                (dataMax: number) => Math.max(dataMax, IDEAL_WAKE) + 30,
+                (dataMin: number) => Math.min(dataMin, AXIS_MIN) - 30,
+                (dataMax: number) => Math.max(dataMax, AXIS_MAX) + 30,
               ]}
               tickFormatter={(v) => nightMinutesToTime(v)}
               ticks={generateTicks(chartData)}
@@ -140,8 +144,8 @@ function generateTicks(
   data: { bedNM: number; wakeNM: number }[]
 ): number[] {
   if (data.length === 0) return [];
-  const allMin = Math.min(...data.map((d) => d.bedNM), IDEAL_BED);
-  const allMax = Math.max(...data.map((d) => d.wakeNM), IDEAL_WAKE);
+  const allMin = Math.min(...data.map((d) => d.bedNM), AXIS_MIN);
+  const allMax = Math.max(...data.map((d) => d.wakeNM), AXIS_MAX);
   const ticks: number[] = [];
   const start = Math.floor(allMin / 120) * 120;
   const end = Math.ceil(allMax / 120) * 120;
