@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useRef } from "react";
 import { clampStep } from "@/lib/sleep-utils";
 
 export function Stepper({
@@ -22,30 +21,12 @@ export function Stepper({
   unit?: string;
   formatValue?: (v: number) => string;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
   function increment() {
     onChange(clampStep(value + step, min, max, step));
   }
 
   function decrement() {
     onChange(clampStep(value - step, min, max, step));
-  }
-
-  function startEditing() {
-    setInputValue(String(value));
-    setEditing(true);
-    setTimeout(() => inputRef.current?.focus(), 0);
-  }
-
-  function commitEdit() {
-    const num = parseInt(inputValue, 10);
-    if (!isNaN(num)) {
-      onChange(clampStep(num, min, max, step));
-    }
-    setEditing(false);
   }
 
   const display = formatValue ? formatValue(value) : `${value}`;
@@ -63,31 +44,14 @@ export function Stepper({
           −
         </button>
 
-        {editing ? (
-          <input
-            ref={inputRef}
-            type="text"
-            inputMode="numeric"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onBlur={commitEdit}
-            onKeyDown={(e) => e.key === "Enter" && commitEdit()}
-            className="w-16 rounded-lg bg-background px-2 py-1 text-center text-lg font-bold text-text outline-none ring-1 ring-primary"
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={startEditing}
-            className="min-w-[48px] text-center text-lg font-bold text-text"
-          >
-            {display}
-            {unit && (
-              <span className="ml-0.5 text-xs font-normal text-text-muted">
-                {unit}
-              </span>
-            )}
-          </button>
-        )}
+        <span className="min-w-[48px] text-center text-lg font-bold text-text">
+          {display}
+          {unit && (
+            <span className="ml-0.5 text-xs font-normal text-text-muted">
+              {unit}
+            </span>
+          )}
+        </span>
 
         <button
           type="button"

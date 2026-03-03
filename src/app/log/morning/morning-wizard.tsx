@@ -279,12 +279,12 @@ function StepStages({
       />
       <div className="space-y-2">
         <Stepper
-          value={data.deepMinutes}
-          onChange={(v) => update("deepMinutes", v)}
+          value={data.remMinutes}
+          onChange={(v) => update("remMinutes", v)}
           min={0}
-          max={300}
+          max={240}
           step={5}
-          label="深い睡眠"
+          label="REM睡眠"
           formatValue={formatMinutesAsHM}
         />
         <Stepper
@@ -297,12 +297,12 @@ function StepStages({
           formatValue={formatMinutesAsHM}
         />
         <Stepper
-          value={data.remMinutes}
-          onChange={(v) => update("remMinutes", v)}
+          value={data.deepMinutes}
+          onChange={(v) => update("deepMinutes", v)}
           min={0}
-          max={240}
+          max={300}
           step={5}
-          label="REM睡眠"
+          label="深い睡眠"
           formatValue={formatMinutesAsHM}
         />
       </div>

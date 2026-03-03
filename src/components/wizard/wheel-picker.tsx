@@ -48,10 +48,11 @@ function WheelColumn({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="scrollbar-hide relative overflow-y-auto"
+      className="scrollbar-hide relative overflow-x-hidden overflow-y-auto overscroll-contain"
       style={{
         height: ITEM_HEIGHT * VISIBLE_ITEMS,
         scrollSnapType: "y mandatory",
+        touchAction: "pan-y",
       }}
     >
       {/* Top spacer */}
