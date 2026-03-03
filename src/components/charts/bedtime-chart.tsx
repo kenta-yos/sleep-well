@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -15,16 +15,23 @@ interface DataPoint {
   wakeTime: string | null;
 }
 
-function timeToMinutes(iso: string | null): number | null {
+// Bedtime: normalize to "evening minutes" (hours < 12 → +24h)
+function bedtimeToMinutes(iso: string | null): number | null {
   if (!iso) return null;
   const d = new Date(iso);
-  // Convert to JST
   const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   let hours = jst.getUTCHours();
   const minutes = jst.getUTCMinutes();
-  // Normalize bedtime: if before 12:00, add 24 (e.g., 1:00 AM = 25:00)
   if (hours < 12) hours += 24;
   return hours * 60 + minutes;
+}
+
+// Wake time: morning hours (no normalization)
+function wakeTimeToMinutes(iso: string | null): number | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  return jst.getUTCHours() * 60 + jst.getUTCMinutes();
 }
 
 function minutesToTime(minutes: number): string {
@@ -33,18 +40,26 @@ function minutesToTime(minutes: number): string {
   return `${h}:${m.toString().padStart(2, "0")}`;
 }
 
+function formatDuration(bedM: number, wakeM: number): string {
+  const diff = bedM - wakeM; // bedM is normalized evening, wakeM is morning
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  return `${h}h ${m.toString().padStart(2, "0")}m`;
+}
+
 export function BedtimeChart({ data }: { data: DataPoint[] }) {
-  const chartData = data.map((d) => ({
-    label: d.date.slice(5),
-    bedtime: timeToMinutes(d.bedtime),
-    wakeTime: d.wakeTime
-      ? (() => {
-          const dt = new Date(d.wakeTime);
-          const jst = new Date(dt.getTime() + 9 * 60 * 60 * 1000);
-          return jst.getUTCHours() * 60 + jst.getUTCMinutes();
-        })()
-      : null,
-  }));
+  const chartData = data
+    .filter((d) => d.bedtime && d.wakeTime)
+    .map((d) => {
+      const bedM = bedtimeToMinutes(d.bedtime)!;
+      const wakeM = wakeTimeToMinutes(d.wakeTime)!;
+      return {
+        label: d.date.slice(5),
+        sleepRange: [wakeM, bedM] as [number, number],
+        bedtime: bedM,
+        wakeTime: wakeM,
+      };
+    });
 
   if (chartData.length === 0) {
     return null;
@@ -52,10 +67,11 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium">就寝・起床時刻</h3>
-      <div className="h-48">
+      <h3 className="text-sm font-medium">睡眠ウィンドウ</h3>
+      <p className="text-[11px] text-text-muted">帯の幅 = 就寝から起床までの時間</p>
+      <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ left: -10, right: 5 }}>
+          <AreaChart data={chartData} margin={{ left: -10, right: 5 }}>
             <XAxis
               dataKey="label"
               tick={{ fontSize: 10, fill: "#888" }}
@@ -63,9 +79,9 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
             />
             <YAxis
               tick={{ fontSize: 10, fill: "#888" }}
-              domain={["auto", "auto"]}
+              domain={["dataMin - 30", "dataMax + 30"]}
               tickFormatter={(v) => minutesToTime(v)}
-              reversed
+              ticks={generateTicks(chartData)}
             />
             <Tooltip
               contentStyle={{
@@ -74,30 +90,49 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
                 borderRadius: "12px",
                 fontSize: 12,
               }}
-              formatter={(value: number, name: string) => [
-                minutesToTime(value),
-                name === "bedtime" ? "就寝" : "起床",
-              ]}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload;
+                return (
+                  <div className="rounded-xl border border-[#333] bg-[#1a1a2e] px-3 py-2 text-xs">
+                    <p className="text-text-muted">{d.label}</p>
+                    <p>就寝: {minutesToTime(d.bedtime)}</p>
+                    <p>起床: {minutesToTime(d.wakeTime)}</p>
+                    <p className="font-medium text-primary">
+                      {formatDuration(d.bedtime, d.wakeTime)}
+                    </p>
+                  </div>
+                );
+              }}
             />
-            <Line
+            <Area
               type="monotone"
-              dataKey="bedtime"
-              stroke="oklch(0.7 0.15 250)"
-              strokeWidth={2}
-              dot={{ r: 2 }}
+              dataKey="sleepRange"
+              fill="oklch(0.55 0.15 270 / 0.4)"
+              stroke="oklch(0.7 0.15 270)"
+              strokeWidth={1.5}
               connectNulls
             />
-            <Line
-              type="monotone"
-              dataKey="wakeTime"
-              stroke="oklch(0.8 0.15 85)"
-              strokeWidth={2}
-              dot={{ r: 2 }}
-              connectNulls
-            />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
+}
+
+// Generate sensible hour ticks spanning the data range
+function generateTicks(
+  data: { bedtime: number; wakeTime: number }[]
+): number[] {
+  if (data.length === 0) return [];
+  const allMin = Math.min(...data.map((d) => d.wakeTime));
+  const allMax = Math.max(...data.map((d) => d.bedtime));
+  const ticks: number[] = [];
+  // Round to nearest hour, step by 2h
+  const start = Math.floor(allMin / 120) * 120;
+  const end = Math.ceil(allMax / 120) * 120;
+  for (let m = start; m <= end; m += 120) {
+    ticks.push(m);
+  }
+  return ticks;
 }
