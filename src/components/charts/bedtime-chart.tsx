@@ -6,6 +6,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 
@@ -108,6 +109,21 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
                 );
               }}
             />
+            {/* 理想: 0:00就寝 / 8:00起床 */}
+            <ReferenceLine
+              y={1440}
+              stroke="oklch(0.6 0.15 155)"
+              strokeDasharray="4 4"
+              strokeWidth={1}
+              label={{ value: "0:00", position: "right", fontSize: 9, fill: "oklch(0.6 0.15 155)" }}
+            />
+            <ReferenceLine
+              y={480}
+              stroke="oklch(0.6 0.15 155)"
+              strokeDasharray="4 4"
+              strokeWidth={1}
+              label={{ value: "8:00", position: "right", fontSize: 9, fill: "oklch(0.6 0.15 155)" }}
+            />
             <Area
               type="monotone"
               dataKey="sleepRange"
@@ -123,15 +139,18 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
   );
 }
 
-// Generate sensible hour ticks spanning the data range
+// Ideal targets: 0:00 bedtime (1440min) and 8:00 wake (480min)
+const IDEAL_BEDTIME = 1440;
+const IDEAL_WAKE = 480;
+
+// Generate sensible hour ticks spanning the data range + ideal lines
 function generateTicks(
   data: { bedtime: number; wakeTime: number }[]
 ): number[] {
   if (data.length === 0) return [];
-  const allMin = Math.min(...data.map((d) => d.wakeTime));
-  const allMax = Math.max(...data.map((d) => d.bedtime));
+  const allMin = Math.min(...data.map((d) => d.wakeTime), IDEAL_WAKE);
+  const allMax = Math.max(...data.map((d) => d.bedtime), IDEAL_BEDTIME);
   const ticks: number[] = [];
-  // Round to nearest hour, step by 2h
   const start = Math.floor(allMin / 120) * 120;
   const end = Math.ceil(allMax / 120) * 120;
   for (let m = start; m <= end; m += 120) {
