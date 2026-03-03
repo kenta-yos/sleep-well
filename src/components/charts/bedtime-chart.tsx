@@ -82,6 +82,7 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
               domain={["dataMin - 30", "dataMax + 30"]}
               tickFormatter={(v) => minutesToTime(v)}
               ticks={generateTicks(chartData)}
+              reversed
             />
             <Tooltip
               contentStyle={{
