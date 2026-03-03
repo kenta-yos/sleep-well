@@ -5,7 +5,6 @@ import { PeriodSelector } from "@/components/ui/period-selector";
 import { SleepDurationChart } from "@/components/charts/sleep-duration-chart";
 import { BedtimeChart } from "@/components/charts/bedtime-chart";
 import { CorrelationChart } from "@/components/charts/correlation-chart";
-import { SleepScoreChart } from "@/components/charts/sleep-score-chart";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 export function TrendsClient({
@@ -54,18 +53,12 @@ export function TrendsClient({
     wakeTime: r.wakeTime as string | null,
   }));
 
-  const scoreData = filteredSleep.map((r) => ({
-    date: r.date,
-    sleepScore: r.sleepScore,
-  }));
-
   return (
     <div className="space-y-6">
       <PeriodSelector value={days} onChange={setDays} />
 
       <SleepDurationChart data={durationData} />
       <BedtimeChart data={bedtimeData} />
-      <SleepScoreChart data={scoreData} />
       <CorrelationChart sleepRecords={filteredSleep} logs={filteredLogs} />
     </div>
   );

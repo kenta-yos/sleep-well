@@ -94,12 +94,14 @@ export default async function HomePage({
       <SleepSummaryCard record={daySleep} />
 
       {/* Week stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard
-          label="週平均スコア"
-          value={avgScore ? `${avgScore}` : "--"}
-          sub="/ 100"
-        />
+      <div className={`grid ${avgScore ? "grid-cols-3" : "grid-cols-2"} gap-3`}>
+        {avgScore && (
+          <StatCard
+            label="週平均スコア"
+            value={`${avgScore}`}
+            sub="/ 100"
+          />
+        )}
         <StatCard
           label="週平均睡眠"
           value={
