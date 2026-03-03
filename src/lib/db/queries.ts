@@ -90,3 +90,30 @@ export async function getSleepRecordCount() {
     .from(sleepRecords);
   return result?.count ?? 0;
 }
+
+// Monthly data for history page
+// Pairing: night of D → evening log(D) + morning log(D+1) + sleep(D+1)
+export async function getMonthlyData(year: number, month: number) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const monthStart = `${year}-${pad(month)}-01`;
+  // Next month's 1st: used for the last night's morning log & sleep data
+  const next = new Date(year, month, 1); // JS Date month is 0-indexed, so `month` (1-indexed) = next month
+  const nextMonthFirst = `${next.getFullYear()}-${pad(next.getMonth() + 1)}-01`;
+
+  // dailyLogs: [monthStart, nextMonthFirst] inclusive
+  const logs = await db
+    .select()
+    .from(dailyLogs)
+    .where(and(gte(dailyLogs.date, monthStart), lte(dailyLogs.date, nextMonthFirst)))
+    .orderBy(dailyLogs.date);
+
+  // sleepRecords: [monthStart day2, nextMonthFirst] — sleep on D+1 pairs with night D
+  const day2 = `${year}-${pad(month)}-02`;
+  const sleep = await db
+    .select()
+    .from(sleepRecords)
+    .where(and(gte(sleepRecords.date, day2), lte(sleepRecords.date, nextMonthFirst)))
+    .orderBy(sleepRecords.date);
+
+  return { sleep, logs };
+}

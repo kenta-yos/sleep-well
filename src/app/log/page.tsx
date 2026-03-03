@@ -25,6 +25,15 @@ export default async function LogPage({
     <div className="space-y-8">
       <DateNav date={date} today={today} />
 
+      <div className="flex justify-end">
+        <Link
+          href="/history"
+          className="text-xs text-text-muted underline hover:text-primary"
+        >
+          月別ログ履歴 →
+        </Link>
+      </div>
+
       {/* Morning section */}
       <section className="space-y-4">
         <div>
