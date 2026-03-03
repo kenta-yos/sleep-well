@@ -16,49 +16,50 @@ interface DataPoint {
   wakeTime: string | null;
 }
 
-// Bedtime: normalize to "evening minutes" (hours < 12 → +24h)
-function bedtimeToMinutes(iso: string | null): number | null {
+// Pivot at 18:00 — maps all times to a continuous "night axis"
+// 18:00→0, 20:00→120, 22:00→240, 0:00→360, 2:00→480, ..., 8:00→840
+const PIVOT_HOUR = 18;
+
+function toNightMinutes(iso: string | null): number | null {
   if (!iso) return null;
   const d = new Date(iso);
   const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  let hours = jst.getUTCHours();
-  const minutes = jst.getUTCMinutes();
-  if (hours < 12) hours += 24;
-  return hours * 60 + minutes;
+  let h = jst.getUTCHours();
+  const m = jst.getUTCMinutes();
+  // Hours before pivot (morning) → add 24 to make them after midnight
+  if (h < PIVOT_HOUR) h += 24;
+  return (h - PIVOT_HOUR) * 60 + m;
 }
 
-// Wake time: morning hours (no normalization)
-function wakeTimeToMinutes(iso: string | null): number | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  return jst.getUTCHours() * 60 + jst.getUTCMinutes();
-}
-
-function minutesToTime(minutes: number): string {
-  const h = Math.floor(minutes / 60) % 24;
-  const m = Math.round(minutes % 60);
+function nightMinutesToTime(nm: number): string {
+  const totalMin = nm + PIVOT_HOUR * 60;
+  const h = Math.floor(totalMin / 60) % 24;
+  const m = Math.round(totalMin % 60);
   return `${h}:${m.toString().padStart(2, "0")}`;
 }
 
-function formatDuration(bedM: number, wakeM: number): string {
-  const diff = bedM - wakeM; // bedM is normalized evening, wakeM is morning
+function formatDuration(bedNM: number, wakeNM: number): string {
+  const diff = wakeNM - bedNM;
   const h = Math.floor(diff / 60);
   const m = diff % 60;
   return `${h}h ${m.toString().padStart(2, "0")}m`;
 }
 
+// Ideal: 0:00 bedtime = (24-18)*60 = 360, 8:00 wake = (8+24-18)*60 = 840
+const IDEAL_BED = (24 - PIVOT_HOUR) * 60; // 360
+const IDEAL_WAKE = (8 + 24 - PIVOT_HOUR) * 60; // 840
+
 export function BedtimeChart({ data }: { data: DataPoint[] }) {
   const chartData = data
     .filter((d) => d.bedtime && d.wakeTime)
     .map((d) => {
-      const bedM = bedtimeToMinutes(d.bedtime)!;
-      const wakeM = wakeTimeToMinutes(d.wakeTime)!;
+      const bedNM = toNightMinutes(d.bedtime)!;
+      const wakeNM = toNightMinutes(d.wakeTime)!;
       return {
         label: d.date.slice(5),
-        sleepRange: [wakeM, bedM] as [number, number],
-        bedtime: bedM,
-        wakeTime: wakeM,
+        sleepRange: [bedNM, wakeNM] as [number, number],
+        bedNM,
+        wakeNM,
       };
     });
 
@@ -71,7 +72,7 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium">睡眠ウィンドウ</h3>
-      <p className="text-[11px] text-text-muted">帯の幅 = 就寝から起床までの時間</p>
+      <p className="text-[11px] text-text-muted">帯 = 睡眠時間 / 点線 = 理想 (0:00–8:00)</p>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ left: -10, right: 5 }}>
@@ -82,43 +83,38 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
             />
             <YAxis
               tick={{ fontSize: 10, fill: "#888" }}
-              domain={["dataMin - 30", "dataMax + 30"]}
-              tickFormatter={(v) => minutesToTime(v)}
+              domain={[
+                (dataMin: number) => Math.min(dataMin, IDEAL_BED) - 30,
+                (dataMax: number) => Math.max(dataMax, IDEAL_WAKE) + 30,
+              ]}
+              tickFormatter={(v) => nightMinutesToTime(v)}
               ticks={generateTicks(chartData)}
-              reversed
             />
             <Tooltip
-              contentStyle={{
-                background: "#1a1a2e",
-                border: "1px solid #333",
-                borderRadius: "12px",
-                fontSize: 12,
-              }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const d = payload[0].payload;
                 return (
                   <div className="rounded-xl border border-[#333] bg-[#1a1a2e] px-3 py-2 text-xs">
                     <p className="text-text-muted">{d.label}</p>
-                    <p>就寝: {minutesToTime(d.bedtime)}</p>
-                    <p>起床: {minutesToTime(d.wakeTime)}</p>
+                    <p>就寝: {nightMinutesToTime(d.bedNM)}</p>
+                    <p>起床: {nightMinutesToTime(d.wakeNM)}</p>
                     <p className="font-medium text-primary">
-                      {formatDuration(d.bedtime, d.wakeTime)}
+                      {formatDuration(d.bedNM, d.wakeNM)}
                     </p>
                   </div>
                 );
               }}
             />
-            {/* 理想: 0:00就寝 / 8:00起床 */}
             <ReferenceLine
-              y={1440}
+              y={IDEAL_BED}
               stroke="oklch(0.6 0.15 155)"
               strokeDasharray="4 4"
               strokeWidth={1}
               label={{ value: "0:00", position: "right", fontSize: 9, fill: "oklch(0.6 0.15 155)" }}
             />
             <ReferenceLine
-              y={480}
+              y={IDEAL_WAKE}
               stroke="oklch(0.6 0.15 155)"
               strokeDasharray="4 4"
               strokeWidth={1}
@@ -139,17 +135,12 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
   );
 }
 
-// Ideal targets: 0:00 bedtime (1440min) and 8:00 wake (480min)
-const IDEAL_BEDTIME = 1440;
-const IDEAL_WAKE = 480;
-
-// Generate sensible hour ticks spanning the data range + ideal lines
 function generateTicks(
-  data: { bedtime: number; wakeTime: number }[]
+  data: { bedNM: number; wakeNM: number }[]
 ): number[] {
   if (data.length === 0) return [];
-  const allMin = Math.min(...data.map((d) => d.wakeTime), IDEAL_WAKE);
-  const allMax = Math.max(...data.map((d) => d.bedtime), IDEAL_BEDTIME);
+  const allMin = Math.min(...data.map((d) => d.bedNM), IDEAL_BED);
+  const allMax = Math.max(...data.map((d) => d.wakeNM), IDEAL_WAKE);
   const ticks: number[] = [];
   const start = Math.floor(allMin / 120) * 120;
   const end = Math.ceil(allMax / 120) * 120;
