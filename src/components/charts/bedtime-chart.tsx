@@ -65,6 +65,8 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
     return null;
   }
 
+  const xInterval = Math.max(1, Math.ceil(chartData.length / 6) - 1);
+
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium">睡眠ウィンドウ</h3>
@@ -75,7 +77,7 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
             <XAxis
               dataKey="label"
               tick={{ fontSize: 10, fill: "#888" }}
-              interval="preserveStartEnd"
+              interval={xInterval}
             />
             <YAxis
               tick={{ fontSize: 10, fill: "#888" }}

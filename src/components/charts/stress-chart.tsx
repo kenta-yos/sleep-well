@@ -32,6 +32,8 @@ export function StressChart({ data }: { data: DataPoint[] }) {
 
   if (chartData.length === 0) return null;
 
+  const xInterval = Math.max(1, Math.ceil(chartData.length / 6) - 1);
+
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium">ストレス度</h3>
@@ -41,7 +43,7 @@ export function StressChart({ data }: { data: DataPoint[] }) {
             <XAxis
               dataKey="label"
               tick={{ fontSize: 10, fill: "#888" }}
-              interval="preserveStartEnd"
+              interval={xInterval}
             />
             <YAxis
               domain={[1, 5]}
