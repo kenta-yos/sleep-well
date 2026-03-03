@@ -9,14 +9,14 @@ import { saveEveningLog, clearEveningLog } from "@/actions/log-actions";
 
 const stressLevels = [
   { score: 1, emoji: "😌", label: "なし" },
-  { score: 2, emoji: "😐", label: "少し" },
-  { score: 3, emoji: "😟", label: "普通" },
+  { score: 2, emoji: "😐", label: "軽め" },
+  { score: 3, emoji: "😟", label: "そこそこ" },
   { score: 4, emoji: "😰", label: "高い" },
   { score: 5, emoji: "🤯", label: "最大" },
 ];
 
 interface FormData {
-  stressScore: number;
+  stressScore: number | null;
   stressSources: string[];
   lateScreen: boolean;
   alcohol: boolean;
@@ -33,7 +33,7 @@ export function EveningForm({
 }) {
   const [data, setData] = useState<FormData>(
     initialData ?? {
-      stressScore: 3,
+      stressScore: null,
       stressSources: [],
       lateScreen: false,
       alcohol: false,
@@ -82,7 +82,7 @@ export function EveningForm({
       </div>
 
       {/* Stress Sources */}
-      {data.stressScore >= 2 && (
+      {data.stressScore != null && data.stressScore >= 2 && (
         <div className="space-y-3">
           <h2 className="text-sm font-medium text-text-muted">
             ストレスの原因
@@ -151,7 +151,7 @@ export function EveningForm({
               startTransition(async () => {
                 await clearEveningLog(date);
                 setData({
-                  stressScore: 3,
+                  stressScore: null,
                   stressSources: [],
                   lateScreen: false,
                   alcohol: false,

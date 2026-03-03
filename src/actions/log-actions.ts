@@ -21,7 +21,7 @@ export async function saveFreshnessScore(date: string, score: number) {
 export async function saveEveningLog(
   date: string,
   data: {
-    stressScore: number;
+    stressScore: number | null;
     stressSources: string[];
     lateScreen: boolean;
     alcohol: boolean;
