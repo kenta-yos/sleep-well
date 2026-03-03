@@ -89,6 +89,7 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
               ]}
               tickFormatter={(v) => nightMinutesToTime(v)}
               ticks={generateTicks(chartData)}
+              reversed
             />
             <Tooltip
               content={({ active, payload }) => {
