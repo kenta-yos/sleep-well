@@ -82,7 +82,7 @@ export default async function HomePage({
   // Log status for selected date
   const hasMorningLog = dayLog?.freshnessScore != null;
   const hasEveningLog = dayLog?.stressScore != null;
-  const dateQuery = date !== today ? `?date=${date}` : "";
+  const dateQuery = `?date=${date}`;
 
   return (
     <div className="space-y-6">
