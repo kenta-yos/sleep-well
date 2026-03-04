@@ -80,41 +80,49 @@ export function generateNightlyTips(
     }
   }
 
-  // 4. Screen time impact
+  // 4. Late meal impact
   if (logsWithFreshness.length >= 3) {
-    const logMap = new Map(recentLogs.map((l) => [l.date, l]));
-    const withScreen: number[] = [];
-    const withoutScreen: number[] = [];
+    const logMap2 = new Map(recentLogs.map((l) => [l.date, l]));
+    const withLateMeal: number[] = [];
+    const withoutLateMeal: number[] = [];
 
     for (const log of logsWithFreshness) {
       const prevDate = new Date(log.date + "T00:00:00+09:00");
       prevDate.setDate(prevDate.getDate() - 1);
       const prevStr = prevDate.toISOString().split("T")[0];
-      const prevLog = logMap.get(prevStr);
+      const prevLog = logMap2.get(prevStr);
       if (!prevLog) continue;
 
-      if (prevLog.lateScreen) {
-        withScreen.push(log.freshnessScore!);
+      if (prevLog.lateMeal) {
+        withLateMeal.push(log.freshnessScore!);
       } else {
-        withoutScreen.push(log.freshnessScore!);
+        withoutLateMeal.push(log.freshnessScore!);
       }
     }
 
-    if (withScreen.length >= 2 && withoutScreen.length >= 2) {
+    if (withLateMeal.length >= 2 && withoutLateMeal.length >= 2) {
       const avgWith =
-        withScreen.reduce((a, b) => a + b, 0) / withScreen.length;
+        withLateMeal.reduce((a, b) => a + b, 0) / withLateMeal.length;
       const avgWithout =
-        withoutScreen.reduce((a, b) => a + b, 0) / withoutScreen.length;
+        withoutLateMeal.reduce((a, b) => a + b, 0) / withoutLateMeal.length;
 
       if (avgWithout - avgWith >= 0.5) {
         tips.push(
-          "就寝前のスマホ使用がすっきり度を下げている傾向があります。寝る1時間前にはスマホを置いてみましょう"
+          `遅い食事の翌朝のすっきり度が平均${avgWith.toFixed(1)}と、しない日(${avgWithout.toFixed(1)})より低い傾向です。夕食は就寝3時間前までに済ませましょう`
         );
       }
     }
   }
 
-  // 5. Sleep duration check
+  // 5. Bathing encouragement
+  const bathingDays = recentLogs.filter((l) => l.bathing).length;
+  if (recentLogs.length >= 5 && bathingDays === 0) {
+    tips.push(
+      "最近入浴の記録がありません。就寝1-2時間前の入浴は深部体温を下げ、寝つきが良くなります"
+    );
+  }
+
+  // 6. Sleep duration check
   const avgDuration =
     recentSleep.reduce((s, r) => s + (r.totalSleepMinutes ?? 0), 0) /
     recentSleep.length;
@@ -126,7 +134,7 @@ export function generateNightlyTips(
     );
   }
 
-  // 6. Exercise encouragement
+  // 7. Exercise encouragement
   const exerciseDays = recentLogs.filter((l) => l.exercise).length;
   if (recentLogs.length >= 5 && exerciseDays === 0) {
     tips.push(

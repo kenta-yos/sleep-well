@@ -11,7 +11,7 @@ interface CorrelationResult {
 function calcCorrelation(
   sleepRecords: SleepRecord[],
   logs: DailyLog[],
-  habitKey: "lateScreen" | "alcohol" | "exercise"
+  habitKey: "alcohol" | "exercise" | "socializing" | "bathing" | "intenseFocus" | "reading" | "lateMeal"
 ): CorrelationResult | null {
   // Match logs with next-day freshness
   const logMap = new Map(logs.map((l) => [l.date, l]));
@@ -42,11 +42,19 @@ function calcCorrelation(
 
   return {
     label:
-      habitKey === "lateScreen"
-        ? "スマホ遅い"
-        : habitKey === "alcohol"
-          ? "飲酒"
-          : "運動",
+      habitKey === "alcohol"
+        ? "飲酒"
+        : habitKey === "exercise"
+          ? "運動"
+          : habitKey === "socializing"
+            ? "交流"
+            : habitKey === "bathing"
+              ? "入浴"
+              : habitKey === "intenseFocus"
+                ? "集中"
+                : habitKey === "reading"
+                  ? "読書"
+                  : "遅食",
     withHabit: { avg: +avg(withHabitScores).toFixed(2), count: withHabitScores.length },
     withoutHabit: {
       avg: +avg(withoutHabitScores).toFixed(2),
@@ -62,7 +70,7 @@ export function CorrelationChart({
   sleepRecords: SleepRecord[];
   logs: DailyLog[];
 }) {
-  const habits = ["lateScreen", "alcohol", "exercise"] as const;
+  const habits = ["alcohol", "exercise", "socializing", "bathing", "intenseFocus", "reading", "lateMeal"] as const;
   const results = habits
     .map((h) => calcCorrelation(sleepRecords, logs, h))
     .filter((r): r is CorrelationResult => r !== null);

@@ -26,9 +26,13 @@ export async function generateWeeklyReview(
     freshness: l.freshnessScore,
     stress: l.stressScore,
     stressSources: l.stressSources,
-    lateScreen: l.lateScreen,
     alcohol: l.alcohol,
     exercise: l.exercise,
+    socializing: l.socializing,
+    bathing: l.bathing,
+    intenseFocus: l.intenseFocus,
+    reading: l.reading,
+    lateMeal: l.lateMeal,
     note: l.note,
   }));
 
@@ -42,7 +46,7 @@ export async function generateWeeklyReview(
 
 ## 分析の観点
 1. 睡眠の質の傾向（スコア、深い睡眠の割合、睡眠時間）
-2. 生活習慣と睡眠の質の相関（飲酒、スマホ、運動、ストレスなど）
+2. 生活習慣と睡眠の質の相関（飲酒、運動、交流、入浴、集中、読書、遅食、ストレスなど）
 3. 就寝・起床時間の規則性
 4. 具体的な改善提案（1-2個に絞る）
 

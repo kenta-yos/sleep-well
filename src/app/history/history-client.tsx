@@ -159,7 +159,7 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
           const mo = row.morningLog;
           const sl = row.sleep;
 
-          const hasEvening = ev && (ev.stressScore != null || ev.lateScreen || ev.alcohol || ev.exercise);
+          const hasEvening = ev && (ev.stressScore != null || ev.alcohol || ev.exercise || ev.socializing || ev.bathing || ev.intenseFocus || ev.reading || ev.lateMeal);
           const hasMorning = mo?.freshnessScore != null;
           const hasSleep = sl?.totalSleepMinutes != null;
           const hasAny = hasEvening || hasMorning || hasSleep;
@@ -201,10 +201,14 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
 
                   {/* Evening: habits */}
                   <span className="text-xs">
-                    {ev?.lateScreen && "📱"}
-                    {ev?.alcohol && "🍺"}
                     {ev?.exercise && "🏃"}
-                    {!ev?.lateScreen && !ev?.alcohol && !ev?.exercise && (
+                    {ev?.alcohol && "🍺"}
+                    {ev?.socializing && "👥"}
+                    {ev?.bathing && "🛁"}
+                    {ev?.intenseFocus && "💻"}
+                    {ev?.reading && "📖"}
+                    {ev?.lateMeal && "🍔"}
+                    {!ev?.exercise && !ev?.alcohol && !ev?.socializing && !ev?.bathing && !ev?.intenseFocus && !ev?.reading && !ev?.lateMeal && (
                       <span className="text-text-muted">--</span>
                     )}
                   </span>

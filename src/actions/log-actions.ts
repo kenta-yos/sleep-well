@@ -23,9 +23,13 @@ export async function saveEveningLog(
   data: {
     stressScore: number | null;
     stressSources: string[];
-    lateScreen: boolean;
     alcohol: boolean;
     exercise: boolean;
+    socializing: boolean;
+    bathing: boolean;
+    intenseFocus: boolean;
+    reading: boolean;
+    lateMeal: boolean;
     note: string;
   }
 ) {
@@ -35,9 +39,13 @@ export async function saveEveningLog(
       date,
       stressScore: data.stressScore,
       stressSources: data.stressSources,
-      lateScreen: data.lateScreen,
       alcohol: data.alcohol,
       exercise: data.exercise,
+      socializing: data.socializing,
+      bathing: data.bathing,
+      intenseFocus: data.intenseFocus,
+      reading: data.reading,
+      lateMeal: data.lateMeal,
       note: data.note || null,
     })
     .onConflictDoUpdate({
@@ -45,9 +53,13 @@ export async function saveEveningLog(
       set: {
         stressScore: sql`excluded.stress_score`,
         stressSources: sql`excluded.stress_sources`,
-        lateScreen: sql`excluded.late_screen`,
         alcohol: sql`excluded.alcohol`,
         exercise: sql`excluded.exercise`,
+        socializing: sql`excluded.socializing`,
+        bathing: sql`excluded.bathing`,
+        intenseFocus: sql`excluded.intense_focus`,
+        reading: sql`excluded.reading`,
+        lateMeal: sql`excluded.late_meal`,
         note: sql`excluded.note`,
         updatedAt: sql`now()`,
       },
@@ -69,9 +81,13 @@ export async function clearEveningLog(date: string) {
     .set({
       stressScore: null,
       stressSources: null,
-      lateScreen: false,
       alcohol: false,
       exercise: false,
+      socializing: false,
+      bathing: false,
+      intenseFocus: false,
+      reading: false,
+      lateMeal: false,
       note: null,
       updatedAt: new Date(),
     })

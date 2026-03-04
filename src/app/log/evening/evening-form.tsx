@@ -18,9 +18,13 @@ const stressLevels = [
 interface FormData {
   stressScore: number | null;
   stressSources: string[];
-  lateScreen: boolean;
   alcohol: boolean;
   exercise: boolean;
+  socializing: boolean;
+  bathing: boolean;
+  intenseFocus: boolean;
+  reading: boolean;
+  lateMeal: boolean;
   note: string;
 }
 
@@ -35,9 +39,13 @@ export function EveningForm({
     initialData ?? {
       stressScore: null,
       stressSources: [],
-      lateScreen: false,
       alcohol: false,
       exercise: false,
+      socializing: false,
+      bathing: false,
+      intenseFocus: false,
+      reading: false,
+      lateMeal: false,
       note: "",
     }
   );
@@ -99,10 +107,10 @@ export function EveningForm({
         <h2 className="text-sm font-medium text-text-muted">生活習慣</h2>
         <div className="flex flex-wrap gap-2">
           <HabitToggle
-            label="スマホ遅い"
-            icon="📱"
-            checked={data.lateScreen}
-            onChange={(v) => update("lateScreen", v)}
+            label="運動"
+            icon="🏃"
+            checked={data.exercise}
+            onChange={(v) => update("exercise", v)}
           />
           <HabitToggle
             label="飲酒"
@@ -111,10 +119,34 @@ export function EveningForm({
             onChange={(v) => update("alcohol", v)}
           />
           <HabitToggle
-            label="運動"
-            icon="🏃"
-            checked={data.exercise}
-            onChange={(v) => update("exercise", v)}
+            label="交流"
+            icon="👥"
+            checked={data.socializing}
+            onChange={(v) => update("socializing", v)}
+          />
+          <HabitToggle
+            label="入浴"
+            icon="🛁"
+            checked={data.bathing}
+            onChange={(v) => update("bathing", v)}
+          />
+          <HabitToggle
+            label="集中"
+            icon="💻"
+            checked={data.intenseFocus}
+            onChange={(v) => update("intenseFocus", v)}
+          />
+          <HabitToggle
+            label="読書"
+            icon="📖"
+            checked={data.reading}
+            onChange={(v) => update("reading", v)}
+          />
+          <HabitToggle
+            label="遅食"
+            icon="🍔"
+            checked={data.lateMeal}
+            onChange={(v) => update("lateMeal", v)}
           />
         </div>
       </div>
@@ -153,9 +185,13 @@ export function EveningForm({
                 setData({
                   stressScore: null,
                   stressSources: [],
-                  lateScreen: false,
                   alcohol: false,
                   exercise: false,
+                  socializing: false,
+                  bathing: false,
+                  intenseFocus: false,
+                  reading: false,
+                  lateMeal: false,
                   note: "",
                 });
                 setSaved(false);

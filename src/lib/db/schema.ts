@@ -41,9 +41,13 @@ export const dailyLogs = pgTable(
     freshnessScore: integer("freshness_score"), // 1-5
     stressScore: integer("stress_score"), // 1-5
     stressSources: json("stress_sources").$type<string[]>(),
-    lateScreen: boolean("late_screen").default(false),
     alcohol: boolean("alcohol").default(false),
     exercise: boolean("exercise").default(false),
+    socializing: boolean("socializing").default(false),
+    bathing: boolean("bathing").default(false),
+    intenseFocus: boolean("intense_focus").default(false),
+    reading: boolean("reading").default(false),
+    lateMeal: boolean("late_meal").default(false),
     note: text("note"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),

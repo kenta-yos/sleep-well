@@ -123,9 +123,13 @@ async function LogEditView({
               ? {
                   stressScore: dailyLog.stressScore ?? null,
                   stressSources: (dailyLog.stressSources as string[]) ?? [],
-                  lateScreen: dailyLog.lateScreen ?? false,
                   alcohol: dailyLog.alcohol ?? false,
                   exercise: dailyLog.exercise ?? false,
+                  socializing: dailyLog.socializing ?? false,
+                  bathing: dailyLog.bathing ?? false,
+                  intenseFocus: dailyLog.intenseFocus ?? false,
+                  reading: dailyLog.reading ?? false,
+                  lateMeal: dailyLog.lateMeal ?? false,
                   note: dailyLog.note ?? "",
                 }
               : null
