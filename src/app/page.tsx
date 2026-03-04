@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getTodayJST } from "@/lib/date-utils";
+import { getEffectiveToday } from "@/lib/date-utils";
 import {
   getSleepRecordByDate,
   getDailyLogByDate,
@@ -18,7 +18,7 @@ export default async function HomePage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date: dateParam } = await searchParams;
-  const today = getTodayJST();
+  const today = getEffectiveToday();
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
   const [daySleep, dayLog, recentSleep, recentLogs, totalCount] =

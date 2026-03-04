@@ -36,6 +36,11 @@ export function getJSTHour(): number {
   return jst.getUTCHours();
 }
 
+/** "Effective today" — 0:00〜3:59 JST is still yesterday (same sleep cycle). */
+export function getEffectiveToday(): string {
+  return getJSTHour() < 4 ? getYesterdayJST() : getTodayJST();
+}
+
 /** Yesterday's date string in JST. Pure arithmetic, no TZ bugs. */
 export function getYesterdayDateStr(): string {
   const today = getTodayJST();

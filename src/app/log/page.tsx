@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getTodayJST, formatDateJP } from "@/lib/date-utils";
+import { getEffectiveToday, formatDateJP } from "@/lib/date-utils";
 import {
   getSleepRecordByDate,
   getDailyLogByDate,
@@ -17,7 +17,7 @@ export default async function LogPage({
   searchParams: Promise<{ date?: string; month?: string }>;
 }) {
   const { date: dateParam, month: monthParam } = await searchParams;
-  const today = getTodayJST();
+  const today = getEffectiveToday();
 
   // If ?date= is present, show edit form
   if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
