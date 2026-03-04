@@ -16,7 +16,14 @@ interface DataPoint {
   deep: number;
   light: number;
   rem: number;
+  totalMinutes: number;
   freshness?: number;
+}
+
+function formatMin(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h}h ${m.toString().padStart(2, "0")}m`;
 }
 
 export function SleepDurationChart({ data }: { data: DataPoint[] }) {
@@ -59,23 +66,22 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
               hide
             />
             <Tooltip
-              contentStyle={{
-                background: "#1a1a2e",
-                border: "1px solid #333",
-                borderRadius: "12px",
-                fontSize: 12,
-              }}
-              formatter={(value: number, name: string) => {
-                const labels: Record<string, string> = {
-                  deepH: "深い睡眠",
-                  lightH: "浅い睡眠",
-                  remH: "REM",
-                  freshness: "すっきり度",
-                };
-                return [
-                  name === "freshness" ? `${value}/5` : `${value}h`,
-                  labels[name] ?? name,
-                ];
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload;
+                if (!d.totalMinutes && !d.freshness) return null;
+                return (
+                  <div className="rounded-xl border border-[#333] bg-[#1a1a2e] px-3 py-2 text-xs">
+                    <p className="text-text-muted">{d.label}</p>
+                    {d.totalMinutes > 0 && (
+                      <p className="font-medium text-primary">{formatMin(d.totalMinutes)}</p>
+                    )}
+                    {d.deepH > 0 && <p>深い: {d.deepH}h</p>}
+                    {d.lightH > 0 && <p>浅い: {d.lightH}h</p>}
+                    {d.remH > 0 && <p>REM: {d.remH}h</p>}
+                    {d.freshness != null && <p>すっきり度: {d.freshness}/5</p>}
+                  </div>
+                );
               }}
             />
             <Bar yAxisId="left" dataKey="deepH" stackId="sleep" fill="oklch(0.5 0.2 270)" radius={[0, 0, 0, 0]} />

@@ -72,6 +72,7 @@ export function TrendsClient({
       deep: r?.deepMinutes ?? 0,
       light: r?.lightMinutes ?? 0,
       rem: r?.remMinutes ?? 0,
+      totalMinutes: r?.totalSleepMinutes ?? 0,
       freshness: logMap.get(date)?.freshnessScore ?? undefined,
     };
   });
