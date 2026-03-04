@@ -100,7 +100,7 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
   function navigateMonth(delta: number) {
     const { year: ny, month: nm } = shiftMonth(year, month, delta);
     startTransition(() => {
-      router.push(`/history?month=${ny}-${pad(nm)}`);
+      router.push(`/log?month=${ny}-${pad(nm)}`);
     });
   }
 

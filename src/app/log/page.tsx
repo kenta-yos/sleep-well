@@ -1,21 +1,62 @@
 import Link from "next/link";
 import { getTodayJST, formatDateJP } from "@/lib/date-utils";
-import { getSleepRecordByDate, getDailyLogByDate } from "@/lib/db/queries";
+import {
+  getSleepRecordByDate,
+  getDailyLogByDate,
+  getMonthlyData,
+} from "@/lib/db/queries";
 import { SleepSummaryCard } from "@/components/log/sleep-summary-card";
 import { DateNav } from "@/components/ui/date-nav";
 import { MorningForm } from "./morning/morning-form";
 import { EveningForm } from "./evening/evening-form";
+import { HistoryClient } from "../history/history-client";
 
 export default async function LogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; month?: string }>;
 }) {
-  const { date: dateParam } = await searchParams;
+  const { date: dateParam, month: monthParam } = await searchParams;
   const today = getTodayJST();
-  const date =
-    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
+  // If ?date= is present, show edit form
+  if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    return <LogEditView date={dateParam} today={today} />;
+  }
+
+  // Otherwise, show monthly history list
+  let year: number;
+  let month: number;
+  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+    const [y, m] = monthParam.split("-").map(Number);
+    year = y;
+    month = m;
+  } else {
+    const [y, m] = today.split("-").map(Number);
+    year = y;
+    month = m;
+  }
+
+  const { sleep, logs } = await getMonthlyData(year, month);
+
+  return (
+    <HistoryClient
+      year={year}
+      month={month}
+      today={today}
+      sleepRecords={sleep}
+      dailyLogs={logs}
+    />
+  );
+}
+
+async function LogEditView({
+  date,
+  today,
+}: {
+  date: string;
+  today: string;
+}) {
   const [sleepRecord, dailyLog] = await Promise.all([
     getSleepRecordByDate(date),
     getDailyLogByDate(date),
@@ -25,14 +66,15 @@ export default async function LogPage({
     <div className="space-y-8">
       <DateNav date={date} today={today} />
 
-      <div className="flex justify-end">
-        <Link
-          href="/history"
-          className="text-xs text-text-muted underline hover:text-primary"
-        >
-          月別ログ履歴 →
-        </Link>
-      </div>
+      <Link
+        href="/log"
+        className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary"
+      >
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        一覧に戻る
+      </Link>
 
       {/* Morning section */}
       <section className="space-y-4">

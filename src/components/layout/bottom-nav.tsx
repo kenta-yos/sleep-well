@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { getJSTHour, getYesterdayDateStr } from "@/lib/date-utils";
 
 const navItems = [
   { href: "/", label: "ホーム", icon: HomeIcon },
@@ -19,13 +18,6 @@ export function BottomNav() {
   if (pathname === "/login") return null;
 
   function getHref(href: string) {
-    if (href === "/log") {
-      // 0-4am JST: default to yesterday's log
-      if (!dateParam && getJSTHour() < 4) {
-        return `/log?date=${getYesterdayDateStr()}`;
-      }
-      return dateParam ? `/log?date=${dateParam}` : "/log";
-    }
     if (href === "/" && dateParam) {
       return `/?date=${dateParam}`;
     }
