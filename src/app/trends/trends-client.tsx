@@ -91,6 +91,7 @@ export function TrendsClient({
     return {
       date,
       stressScore: l?.stressScore ?? null,
+      stressSources: (l?.stressSources as string[] | null) ?? null,
     };
   });
 

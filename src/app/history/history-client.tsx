@@ -247,7 +247,7 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
 
               {/* Note */}
               {ev?.note && (
-                <p className="mt-1.5 line-clamp-2 text-[11px] text-text-muted">
+                <p className="mt-1.5 text-[11px] text-text-muted">
                   {ev.note}
                 </p>
               )}
