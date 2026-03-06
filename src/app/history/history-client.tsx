@@ -13,13 +13,10 @@ const freshnessEmojis: Record<number, string> = {
   5: "😴",
 };
 
-const stressEmojis: Record<number, string> = {
-  1: "😌",
-  2: "😐",
-  3: "😟",
-  4: "😰",
-  5: "🤯",
-};
+function getStressTotal(sources: Record<string, number> | null | undefined): number {
+  if (!sources || typeof sources !== "object") return 0;
+  return Object.values(sources).reduce((sum, v) => sum + v, 0);
+}
 
 function formatMinutes(min: number): string {
   const h = Math.floor(min / 60);
@@ -159,7 +156,8 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
           const mo = row.morningLog;
           const sl = row.sleep;
 
-          const hasEvening = ev && (ev.stressScore != null || ev.alcohol || ev.exercise || ev.socializing || ev.bathing || ev.intenseFocus || ev.reading || ev.lateMeal);
+          const stressTotal = getStressTotal(ev?.stressSources as Record<string, number> | null);
+          const hasEvening = ev && (stressTotal > 0 || ev.alcohol || ev.exercise || ev.socializing || ev.bathing || ev.intenseFocus || ev.reading || ev.lateMeal);
           const hasMorning = mo?.freshnessScore != null;
           const hasSleep = sl?.totalSleepMinutes != null;
           const hasAny = hasEvening || hasMorning || hasSleep;
@@ -187,12 +185,12 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
                 <p className="mt-1 text-xs text-text-muted">--</p>
               ) : (
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                  {/* Evening: stress */}
+                  {/* Evening: stress total */}
                   <span className="text-xs">
-                    {ev?.stressScore != null ? (
+                    {stressTotal > 0 ? (
                       <>
-                        {stressEmojis[ev.stressScore]}{" "}
-                        <span className="text-text-muted">{ev.stressScore}</span>
+                        {"😟 "}
+                        <span className="text-text-muted">{stressTotal}</span>
                       </>
                     ) : (
                       <span className="text-text-muted">--</span>

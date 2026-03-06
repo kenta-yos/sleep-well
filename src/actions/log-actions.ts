@@ -21,8 +21,7 @@ export async function saveFreshnessScore(date: string, score: number) {
 export async function saveEveningLog(
   date: string,
   data: {
-    stressScore: number | null;
-    stressSources: string[];
+    stressSources: Record<string, number>;
     alcohol: boolean;
     exercise: boolean;
     socializing: boolean;
@@ -37,7 +36,6 @@ export async function saveEveningLog(
     .insert(dailyLogs)
     .values({
       date,
-      stressScore: data.stressScore,
       stressSources: data.stressSources,
       alcohol: data.alcohol,
       exercise: data.exercise,
@@ -51,7 +49,6 @@ export async function saveEveningLog(
     .onConflictDoUpdate({
       target: dailyLogs.date,
       set: {
-        stressScore: sql`excluded.stress_score`,
         stressSources: sql`excluded.stress_sources`,
         alcohol: sql`excluded.alcohol`,
         exercise: sql`excluded.exercise`,
@@ -79,7 +76,6 @@ export async function clearEveningLog(date: string) {
   await db
     .update(dailyLogs)
     .set({
-      stressScore: null,
       stressSources: null,
       alcohol: false,
       exercise: false,

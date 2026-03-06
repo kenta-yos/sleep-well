@@ -38,8 +38,7 @@ export const dailyLogs = pgTable(
     id: serial("id").primaryKey(),
     date: date("date").notNull(),
     freshnessScore: integer("freshness_score"), // 1-5
-    stressScore: integer("stress_score"), // 1-5
-    stressSources: json("stress_sources").$type<string[]>(),
+    stressSources: json("stress_sources").$type<Record<string, number>>(),
     alcohol: boolean("alcohol").default(false),
     exercise: boolean("exercise").default(false),
     socializing: boolean("socializing").default(false),

@@ -1,6 +1,6 @@
 "use client";
 
-const sources = [
+const categories = [
   { id: "work", label: "仕事" },
   { id: "friends", label: "友人関係" },
   { id: "romance", label: "恋愛" },
@@ -10,37 +10,54 @@ const sources = [
   { id: "other", label: "その他" },
 ];
 
+const scoreStyles: Record<number, string> = {
+  0: "border-border bg-surface text-text-muted",
+  1: "border-accent-purple/40 bg-accent-purple/10 text-text",
+  2: "border-accent-purple/70 bg-accent-purple/20 text-text",
+  3: "border-accent-purple bg-accent-purple/35 text-text",
+};
+
+const scoreLabels: Record<number, string> = {
+  0: "−",
+  1: "低",
+  2: "中",
+  3: "高",
+};
+
 export function StressSources({
-  selected,
+  scores,
   onChange,
 }: {
-  selected: string[];
-  onChange: (sources: string[]) => void;
+  scores: Record<string, number>;
+  onChange: (scores: Record<string, number>) => void;
 }) {
-  function toggle(id: string) {
-    if (selected.includes(id)) {
-      onChange(selected.filter((s) => s !== id));
+  function cycle(id: string) {
+    const current = scores[id] ?? 0;
+    const next = (current + 1) % 4;
+    const updated = { ...scores };
+    if (next === 0) {
+      delete updated[id];
     } else {
-      onChange([...selected, id]);
+      updated[id] = next;
     }
+    onChange(updated);
   }
 
   return (
     <div className="flex flex-wrap gap-2">
-      {sources.map(({ id, label }) => {
-        const isSelected = selected.includes(id);
+      {categories.map(({ id, label }) => {
+        const score = scores[id] ?? 0;
         return (
           <button
             key={id}
             type="button"
-            onClick={() => toggle(id)}
-            className={`min-h-[44px] rounded-xl border-2 px-3 py-2 text-sm transition-all ${
-              isSelected
-                ? "border-accent-purple bg-accent-purple/15 text-text"
-                : "border-border bg-surface text-text-muted"
-            }`}
+            onClick={() => cycle(id)}
+            className={`flex min-h-[44px] items-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm transition-all ${scoreStyles[score]}`}
           >
-            {label}
+            <span>{label}</span>
+            <span className="min-w-[1.2em] text-center text-xs font-bold">
+              {scoreLabels[score]}
+            </span>
           </button>
         );
       })}

@@ -73,7 +73,8 @@ export default async function HomePage({
 
   // Log status for selected date
   const hasMorningLog = dayLog?.freshnessScore != null;
-  const hasEveningLog = dayLog?.stressScore != null;
+  const stressSources = dayLog?.stressSources as Record<string, number> | null;
+  const hasEveningLog = (stressSources && Object.values(stressSources).reduce((s, v) => s + v, 0) > 0) || dayLog?.alcohol || dayLog?.exercise || dayLog?.socializing || dayLog?.bathing || dayLog?.intenseFocus || dayLog?.reading || dayLog?.lateMeal;
   const dateQuery = `?date=${date}`;
 
   return (

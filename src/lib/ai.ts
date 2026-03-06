@@ -23,7 +23,6 @@ export async function generateWeeklyReview(
   const logSummary = dailyLogs.map((l) => ({
     date: l.date,
     freshness: l.freshnessScore,
-    stress: l.stressScore,
     stressSources: l.stressSources,
     alcohol: l.alcohol,
     exercise: l.exercise,

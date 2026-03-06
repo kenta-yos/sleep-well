@@ -90,8 +90,7 @@ export function TrendsClient({
     const l = logMap.get(date);
     return {
       date,
-      stressScore: l?.stressScore ?? null,
-      stressSources: (l?.stressSources as string[] | null) ?? null,
+      stressSources: (l?.stressSources as Record<string, number> | null) ?? null,
     };
   });
 

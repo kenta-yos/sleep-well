@@ -7,17 +7,8 @@ import { HabitToggle } from "@/components/log/habit-toggle";
 import { Spinner } from "@/components/ui/spinner";
 import { saveEveningLog, clearEveningLog } from "@/actions/log-actions";
 
-const stressLevels = [
-  { score: 1, emoji: "😌", label: "なし" },
-  { score: 2, emoji: "😐", label: "軽め" },
-  { score: 3, emoji: "😟", label: "そこそこ" },
-  { score: 4, emoji: "😰", label: "高い" },
-  { score: 5, emoji: "🤯", label: "最大" },
-];
-
 interface FormData {
-  stressScore: number | null;
-  stressSources: string[];
+  stressSources: Record<string, number>;
   alcohol: boolean;
   exercise: boolean;
   socializing: boolean;
@@ -37,8 +28,7 @@ export function EveningForm({
 }) {
   const [data, setData] = useState<FormData>(
     initialData ?? {
-      stressScore: null,
-      stressSources: [],
+      stressSources: {},
       alcohol: false,
       exercise: false,
       socializing: false,
@@ -67,40 +57,16 @@ export function EveningForm({
 
   return (
     <div className="space-y-6">
-      {/* Stress Score */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">ストレス度</h2>
-        <div className="flex items-center justify-between gap-2">
-          {stressLevels.map(({ score, emoji, label }) => (
-            <button
-              key={score}
-              type="button"
-              onClick={() => update("stressScore", score)}
-              className={`flex min-h-[56px] min-w-[56px] flex-col items-center justify-center gap-1 rounded-2xl border-2 transition-all ${
-                data.stressScore === score
-                  ? "border-accent-purple bg-accent-purple/15 scale-110"
-                  : "border-border bg-surface hover:border-accent-purple/50"
-              }`}
-            >
-              <span className="text-2xl">{emoji}</span>
-              <span className="text-[10px] text-text-muted">{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Stress Sources */}
-      {data.stressScore != null && data.stressScore >= 2 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-medium text-text-muted">
-            ストレスの原因
-          </h2>
-          <StressSources
-            selected={data.stressSources}
-            onChange={(sources) => update("stressSources", sources)}
-          />
-        </div>
-      )}
+      <div className="space-y-3">
+        <h2 className="text-sm font-medium text-text-muted">
+          ストレス（タップでスコア切替: −→低→中→高）
+        </h2>
+        <StressSources
+          scores={data.stressSources}
+          onChange={(sources) => update("stressSources", sources)}
+        />
+      </div>
 
       {/* Habits */}
       <div className="space-y-3">
@@ -183,8 +149,7 @@ export function EveningForm({
               startTransition(async () => {
                 await clearEveningLog(date);
                 setData({
-                  stressScore: null,
-                  stressSources: [],
+                  stressSources: {},
                   alcohol: false,
                   exercise: false,
                   socializing: false,

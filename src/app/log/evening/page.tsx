@@ -35,8 +35,7 @@ export default async function EveningPage({
         initialData={
           dailyLog
             ? {
-                stressScore: dailyLog.stressScore ?? null,
-                stressSources: (dailyLog.stressSources as string[]) ?? [],
+                stressSources: (dailyLog.stressSources as Record<string, number>) ?? {},
                 alcohol: dailyLog.alcohol ?? false,
                 exercise: dailyLog.exercise ?? false,
                 socializing: dailyLog.socializing ?? false,

@@ -11,17 +11,8 @@ import {
 
 interface DataPoint {
   date: string;
-  stressScore: number | null;
-  stressSources: string[] | null;
+  stressSources: Record<string, number> | null;
 }
-
-const stressLabels: Record<number, string> = {
-  1: "😌 なし",
-  2: "😐 軽め",
-  3: "😟 そこそこ",
-  4: "😰 高い",
-  5: "🤯 最大",
-};
 
 const sourceLabels: Record<string, string> = {
   work: "仕事",
@@ -33,12 +24,17 @@ const sourceLabels: Record<string, string> = {
   other: "その他",
 };
 
+function getTotal(sources: Record<string, number> | null): number {
+  if (!sources) return 0;
+  return Object.values(sources).reduce((sum, v) => sum + v, 0);
+}
+
 export function StressChart({ data }: { data: DataPoint[] }) {
   const chartData = data
-    .filter((d) => d.stressScore != null)
+    .filter((d) => d.stressSources && getTotal(d.stressSources) > 0)
     .map((d) => ({
       label: d.date.slice(5),
-      stress: d.stressScore,
+      total: getTotal(d.stressSources),
       sources: d.stressSources,
     }));
 
@@ -46,20 +42,23 @@ export function StressChart({ data }: { data: DataPoint[] }) {
 
   const xInterval = Math.max(1, Math.ceil(chartData.length / 6) - 1);
 
-  // Aggregate stress source frequency
-  const sourceCounts = new Map<string, number>();
+  // Aggregate category totals across the period
+  const categoryTotals = new Map<string, number>();
   for (const d of chartData) {
     if (d.sources) {
-      for (const s of d.sources) {
-        sourceCounts.set(s, (sourceCounts.get(s) ?? 0) + 1);
+      for (const [key, val] of Object.entries(d.sources)) {
+        categoryTotals.set(key, (categoryTotals.get(key) ?? 0) + val);
       }
     }
   }
-  const sortedSources = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]);
+  const sortedCategories = [...categoryTotals.entries()].sort(
+    (a, b) => b[1] - a[1]
+  );
+  const maxCategoryTotal = sortedCategories[0]?.[1] ?? 1;
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium">ストレス度</h3>
+      <h3 className="text-sm font-medium">ストレス（合計）</h3>
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ left: -20, right: 5 }}>
@@ -69,8 +68,8 @@ export function StressChart({ data }: { data: DataPoint[] }) {
               interval={xInterval}
             />
             <YAxis
-              domain={[1, 5]}
-              ticks={[1, 2, 3, 4, 5]}
+              domain={[0, 21]}
+              ticks={[0, 7, 14, 21]}
               tick={{ fontSize: 10, fill: "#888" }}
             />
             <Tooltip
@@ -83,18 +82,23 @@ export function StressChart({ data }: { data: DataPoint[] }) {
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 const item = payload[0].payload;
-                const score = item.stress as number;
-                const sources = item.sources as string[] | null;
+                const sources = item.sources as Record<string, number> | null;
+                const total = item.total as number;
                 return (
                   <div className="rounded-xl border border-border bg-[#1a1a2e] px-3 py-2 text-xs">
                     <p className="text-text-muted">{label}</p>
-                    <p className="font-medium text-text">
-                      {stressLabels[score] ?? score}
-                    </p>
-                    {sources && sources.length > 0 && (
-                      <p className="mt-1 text-text-muted">
-                        {sources.map((s) => sourceLabels[s] ?? s).join(", ")}
-                      </p>
+                    <p className="font-medium text-text">合計: {total}</p>
+                    {sources && (
+                      <div className="mt-1 space-y-0.5">
+                        {Object.entries(sources)
+                          .filter(([, v]) => v > 0)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([key, val]) => (
+                            <p key={key} className="text-text-muted">
+                              {sourceLabels[key] ?? key}: {val}
+                            </p>
+                          ))}
+                      </div>
                     )}
                   </div>
                 );
@@ -102,7 +106,7 @@ export function StressChart({ data }: { data: DataPoint[] }) {
             />
             <Line
               type="monotone"
-              dataKey="stress"
+              dataKey="total"
               stroke="oklch(0.65 0.2 25)"
               strokeWidth={2}
               dot={{ r: 2 }}
@@ -111,16 +115,26 @@ export function StressChart({ data }: { data: DataPoint[] }) {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      {sortedSources.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {sortedSources.map(([source, count]) => (
-            <span
-              key={source}
-              className="rounded-lg bg-surface px-2 py-0.5 text-[11px] text-text-muted"
-            >
-              {sourceLabels[source] ?? source}
-              <span className="ml-1 text-text">{count}</span>
-            </span>
+      {sortedCategories.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[11px] text-text-muted">カテゴリ別（期間合計）</p>
+          {sortedCategories.map(([source, total]) => (
+            <div key={source} className="flex items-center gap-2">
+              <span className="w-20 text-[11px] text-text-muted">
+                {sourceLabels[source] ?? source}
+              </span>
+              <div className="flex-1">
+                <div
+                  className="h-3 rounded bg-accent-purple/50"
+                  style={{
+                    width: `${(total / maxCategoryTotal) * 100}%`,
+                  }}
+                />
+              </div>
+              <span className="w-6 text-right text-[11px] text-text">
+                {total}
+              </span>
+            </div>
           ))}
         </div>
       )}
