@@ -116,7 +116,6 @@ export function parseAggregatedCSV(csvText: string): NewSleepRecord[] {
       avgHeartRate: data.avg_hr,
       minHeartRate: data.min_hr,
       maxHeartRate: data.max_hr,
-      sleepScore: data.sleep_score,
       stageItems: null,
     });
   }

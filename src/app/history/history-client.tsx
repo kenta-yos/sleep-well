@@ -236,12 +236,6 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
                     )}
                   </span>
 
-                  {/* Sleep score */}
-                  {sl?.sleepScore != null && (
-                    <span className="text-xs text-primary">
-                      {sl.sleepScore}点
-                    </span>
-                  )}
                 </div>
               )}
 

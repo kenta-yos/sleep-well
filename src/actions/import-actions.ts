@@ -54,7 +54,6 @@ export async function importCSVAction(formData: FormData) {
               avgHeartRate: sql`excluded.avg_heart_rate`,
               minHeartRate: sql`excluded.min_heart_rate`,
               maxHeartRate: sql`excluded.max_heart_rate`,
-              sleepScore: sql`excluded.sleep_score`,
               stageItems: sql`excluded.stage_items`,
             },
           })

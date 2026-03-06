@@ -104,7 +104,6 @@ export async function GET(req: NextRequest) {
           lightMinutes: sleep.lightMinutes,
           remMinutes: sleep.remMinutes,
           avgHeartRate: sleep.avgHeartRate,
-          sleepScore: sleep.sleepScore,
         }
       : null,
     freshnessScore: log?.freshnessScore ?? null,

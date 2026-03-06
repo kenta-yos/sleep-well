@@ -28,13 +28,8 @@ export function SleepSummaryCard({ record }: { record: SleepRecord | null }) {
 
   return (
     <div className="rounded-2xl border border-border bg-surface p-4">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3">
         <h3 className="text-sm font-medium text-text-muted">昨夜の睡眠</h3>
-        {record.sleepScore && (
-          <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-sm font-bold text-primary">
-            {record.sleepScore}点
-          </span>
-        )}
       </div>
 
       <div className="mb-3 flex items-baseline gap-1">

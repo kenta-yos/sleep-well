@@ -26,7 +26,6 @@ export const sleepRecords = pgTable(
     avgHeartRate: integer("avg_heart_rate"),
     minHeartRate: integer("min_heart_rate"),
     maxHeartRate: integer("max_heart_rate"),
-    sleepScore: integer("sleep_score"),
     stageItems: json("stage_items"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   },

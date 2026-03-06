@@ -52,7 +52,6 @@ async function main() {
       avg_heart_rate: data.avg_hr,
       min_heart_rate: data.min_hr,
       max_heart_rate: data.max_hr,
-      sleep_score: data.sleep_score,
       stage_items: null,
     });
   }
@@ -84,8 +83,8 @@ async function main() {
   let count = 0;
   for (const r of records) {
     await sql`
-      INSERT INTO sleep_records (date, bedtime, wake_time, total_sleep_minutes, deep_minutes, light_minutes, rem_minutes, awake_minutes, avg_heart_rate, min_heart_rate, max_heart_rate, sleep_score, stage_items)
-      VALUES (${r.date}, ${r.bedtime}, ${r.wake_time}, ${r.total_sleep_minutes}, ${r.deep_minutes}, ${r.light_minutes}, ${r.rem_minutes}, ${r.awake_minutes}, ${r.avg_heart_rate}, ${r.min_heart_rate}, ${r.max_heart_rate}, ${r.sleep_score}, ${r.stage_items}::json)
+      INSERT INTO sleep_records (date, bedtime, wake_time, total_sleep_minutes, deep_minutes, light_minutes, rem_minutes, awake_minutes, avg_heart_rate, min_heart_rate, max_heart_rate, stage_items)
+      VALUES (${r.date}, ${r.bedtime}, ${r.wake_time}, ${r.total_sleep_minutes}, ${r.deep_minutes}, ${r.light_minutes}, ${r.rem_minutes}, ${r.awake_minutes}, ${r.avg_heart_rate}, ${r.min_heart_rate}, ${r.max_heart_rate}, ${r.stage_items}::json)
       ON CONFLICT (date) DO UPDATE SET
         bedtime = EXCLUDED.bedtime,
         wake_time = EXCLUDED.wake_time,
@@ -97,7 +96,6 @@ async function main() {
         avg_heart_rate = EXCLUDED.avg_heart_rate,
         min_heart_rate = EXCLUDED.min_heart_rate,
         max_heart_rate = EXCLUDED.max_heart_rate,
-        sleep_score = EXCLUDED.sleep_score,
         stage_items = EXCLUDED.stage_items
     `;
     count++;

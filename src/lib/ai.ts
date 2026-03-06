@@ -11,7 +11,6 @@ export async function generateWeeklyReview(
 ): Promise<string> {
   const sleepSummary = sleepRecords.map((r) => ({
     date: r.date,
-    sleepScore: r.sleepScore,
     totalMin: r.totalSleepMinutes,
     deepMin: r.deepMinutes,
     lightMin: r.lightMinutes,
@@ -45,7 +44,7 @@ export async function generateWeeklyReview(
         content: `あなたは睡眠コーチです。以下の1週間の睡眠データと生活習慣ログを分析し、日本語で簡潔なレビューを書いてください。
 
 ## 分析の観点
-1. 睡眠の質の傾向（スコア、深い睡眠の割合、睡眠時間）
+1. 睡眠の質の傾向（深い睡眠の割合、睡眠時間）
 2. 生活習慣と睡眠の質の相関（飲酒、運動、交流、入浴、集中、読書、遅食、ストレスなど）
 3. 就寝・起床時間の規則性
 4. 具体的な改善提案（1-2個に絞る）

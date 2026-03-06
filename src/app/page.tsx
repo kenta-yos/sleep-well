@@ -51,15 +51,6 @@ export default async function HomePage({
   }
 
   // Week stats
-  const scoredSleep = recentSleep.filter((r) => r.sleepScore != null);
-  const avgScore =
-    scoredSleep.length > 0
-      ? Math.round(
-          scoredSleep.reduce((s, r) => s + r.sleepScore!, 0) /
-            scoredSleep.length
-        )
-      : null;
-
   const avgDuration =
     recentSleep.length > 0
       ? Math.round(
@@ -95,14 +86,7 @@ export default async function HomePage({
       <SleepSummaryCard record={daySleep} />
 
       {/* Week stats */}
-      <div className={`grid ${avgScore != null ? "grid-cols-3" : "grid-cols-2"} gap-3`}>
-        {avgScore != null && (
-          <StatCard
-            label="週平均スコア"
-            value={`${avgScore}`}
-            sub="/ 100"
-          />
-        )}
+      <div className="grid grid-cols-2 gap-3">
         <StatCard
           label="週平均睡眠"
           value={
