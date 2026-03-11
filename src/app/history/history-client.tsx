@@ -18,6 +18,15 @@ function getStressTotal(sources: Record<string, number> | null | undefined): num
   return Object.values(sources).reduce((sum, v) => sum + v, 0);
 }
 
+function getStressEmoji(total: number): string {
+  if (total === 0) return "😆";
+  if (total <= 3) return "😌";
+  if (total <= 7) return "😐";
+  if (total <= 11) return "😟";
+  if (total <= 16) return "😰";
+  return "🤯";
+}
+
 function formatMinutes(min: number): string {
   const h = Math.floor(min / 60);
   const m = min % 60;
@@ -157,7 +166,7 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
           const sl = row.sleep;
 
           const stressTotal = getStressTotal(ev?.stressSources as Record<string, number> | null);
-          const hasEvening = ev && (stressTotal > 0 || ev.alcohol || ev.exercise || ev.socializing || ev.bathing || ev.intenseFocus || ev.reading || ev.lateMeal);
+          const hasEvening = ev && (ev.stressSources != null || ev.alcohol || ev.exercise || ev.socializing || ev.bathing || ev.intenseFocus || ev.reading || ev.lateMeal);
           const hasMorning = mo?.freshnessScore != null;
           const hasSleep = sl?.totalSleepMinutes != null;
           const hasAny = hasEvening || hasMorning || hasSleep;
@@ -187,9 +196,9 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                   {/* Evening: stress total */}
                   <span className="text-xs">
-                    {stressTotal > 0 ? (
+                    {ev?.stressSources != null ? (
                       <>
-                        {"😟 "}
+                        {getStressEmoji(stressTotal)}{" "}
                         <span className="text-text-muted">{stressTotal}</span>
                       </>
                     ) : (

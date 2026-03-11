@@ -1,7 +1,7 @@
 import { getTodayJST, formatDateJP } from "@/lib/date-utils";
 import { getSleepRecordByDate, getDailyLogByDate } from "@/lib/db/queries";
 import { DateNav } from "@/components/ui/date-nav";
-import { MorningWizard } from "./morning-wizard";
+import { MorningForm } from "./morning-form";
 import { timestampToTime } from "@/lib/sleep-utils";
 
 export default async function MorningPage({
@@ -41,7 +41,7 @@ export default async function MorningPage({
 
       <DateNav date={date} today={today} />
 
-      <MorningWizard key={date} date={date} initialData={initialData} />
+      <MorningForm key={date} date={date} initialData={initialData} />
     </div>
   );
 }

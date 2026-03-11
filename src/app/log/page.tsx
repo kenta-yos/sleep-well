@@ -5,11 +5,11 @@ import {
   getDailyLogByDate,
   getMonthlyData,
 } from "@/lib/db/queries";
-import { SleepSummaryCard } from "@/components/log/sleep-summary-card";
 import { DateNav } from "@/components/ui/date-nav";
 import { MorningForm } from "./morning/morning-form";
 import { EveningForm } from "./evening/evening-form";
 import { HistoryClient } from "../history/history-client";
+import { timestampToTime } from "@/lib/sleep-utils";
 
 export default async function LogPage({
   searchParams,
@@ -62,6 +62,17 @@ async function LogEditView({
     getDailyLogByDate(date),
   ]);
 
+  const morningInitialData = {
+    freshnessScore: dailyLog?.freshnessScore ?? null,
+    bedtime: timestampToTime(sleepRecord?.bedtime ?? null),
+    wakeTime: timestampToTime(sleepRecord?.wakeTime ?? null),
+    totalSleepMinutes: sleepRecord?.totalSleepMinutes ?? null,
+    deepMinutes: sleepRecord?.deepMinutes ?? null,
+    lightMinutes: sleepRecord?.lightMinutes ?? null,
+    remMinutes: sleepRecord?.remMinutes ?? null,
+    avgHeartRate: sleepRecord?.avgHeartRate ?? null,
+  };
+
   return (
     <div className="space-y-8">
       <DateNav date={date} today={today} />
@@ -81,24 +92,15 @@ async function LogEditView({
         <div>
           <h2 className="text-lg font-bold">朝の記録</h2>
           <p className="text-xs text-text-muted">
-            {formatDateJP(date)}の朝、起きたときのすっきり度
+            {formatDateJP(date)}の朝、起きたときのすっきり度と睡眠データ
           </p>
         </div>
-
-        <SleepSummaryCard record={sleepRecord} />
 
         <MorningForm
           key={`morning-${date}`}
           date={date}
-          initialScore={dailyLog?.freshnessScore ?? null}
+          initialData={morningInitialData}
         />
-
-        <Link
-          href={`/log/morning${date !== today ? `?date=${date}` : ""}`}
-          className="block text-center text-xs text-primary underline"
-        >
-          睡眠データも手入力する →
-        </Link>
       </section>
 
       <hr className="border-border" />

@@ -31,7 +31,7 @@ function getTotal(sources: Record<string, number> | null): number {
 
 export function StressChart({ data }: { data: DataPoint[] }) {
   const chartData = data
-    .filter((d) => d.stressSources && getTotal(d.stressSources) > 0)
+    .filter((d) => d.stressSources != null)
     .map((d) => ({
       label: d.date.slice(5),
       total: getTotal(d.stressSources),
