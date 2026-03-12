@@ -6,10 +6,36 @@ import {
   getMonthlyData,
 } from "@/lib/db/queries";
 import { DateNav } from "@/components/ui/date-nav";
-import { MorningForm } from "./morning/morning-form";
-import { EveningForm } from "./evening/evening-form";
+import { SleepSummaryCard } from "@/components/log/sleep-summary-card";
 import { HistoryClient } from "../history/history-client";
-import { timestampToTime } from "@/lib/sleep-utils";
+
+const freshnessEmojis: Record<number, string> = {
+  1: "😫",
+  2: "😕",
+  3: "😐",
+  4: "😊",
+  5: "😴",
+};
+
+const stressLabels: Record<string, string> = {
+  work: "仕事",
+  friends: "友人関係",
+  romance: "恋愛",
+  health: "体調・健康",
+  money: "金銭",
+  future: "将来・生き方",
+  other: "その他",
+};
+
+const habitList = [
+  { key: "exercise", icon: "🏃", label: "運動" },
+  { key: "alcohol", icon: "🍺", label: "飲酒" },
+  { key: "socializing", icon: "👥", label: "交流" },
+  { key: "bathing", icon: "🛁", label: "入浴" },
+  { key: "intenseFocus", icon: "💻", label: "集中" },
+  { key: "reading", icon: "📖", label: "読書" },
+  { key: "lateMeal", icon: "🍔", label: "遅食" },
+] as const;
 
 export default async function LogPage({
   searchParams,
@@ -19,9 +45,9 @@ export default async function LogPage({
   const { date: dateParam, month: monthParam } = await searchParams;
   const today = getEffectiveToday();
 
-  // If ?date= is present, show edit form
+  // If ?date= is present, show read-only summary
   if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
-    return <LogEditView date={dateParam} today={today} />;
+    return <LogSummaryView date={dateParam} today={today} />;
   }
 
   // Otherwise, show monthly history list
@@ -50,7 +76,7 @@ export default async function LogPage({
   );
 }
 
-async function LogEditView({
+async function LogSummaryView({
   date,
   today,
 }: {
@@ -62,19 +88,18 @@ async function LogEditView({
     getDailyLogByDate(date),
   ]);
 
-  const morningInitialData = {
-    freshnessScore: dailyLog?.freshnessScore ?? null,
-    bedtime: timestampToTime(sleepRecord?.bedtime ?? null),
-    wakeTime: timestampToTime(sleepRecord?.wakeTime ?? null),
-    totalSleepMinutes: sleepRecord?.totalSleepMinutes ?? null,
-    deepMinutes: sleepRecord?.deepMinutes ?? null,
-    lightMinutes: sleepRecord?.lightMinutes ?? null,
-    remMinutes: sleepRecord?.remMinutes ?? null,
-    avgHeartRate: sleepRecord?.avgHeartRate ?? null,
-  };
+  const dateQuery = `?date=${date}`;
+  const freshnessScore = dailyLog?.freshnessScore ?? null;
+  const stressSources = (dailyLog?.stressSources as Record<string, number>) ?? null;
+  const stressTotal = stressSources
+    ? Object.values(stressSources).reduce((s, v) => s + v, 0)
+    : 0;
+  const activeHabits = habitList.filter(
+    (h) => dailyLog?.[h.key as keyof typeof dailyLog]
+  );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <DateNav date={date} today={today} />
 
       <Link
@@ -87,55 +112,84 @@ async function LogEditView({
         一覧に戻る
       </Link>
 
+      <h1 className="text-lg font-bold">{formatDateJP(date)}のログ</h1>
+
       {/* Morning section */}
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold">朝の記録</h2>
-          <p className="text-xs text-text-muted">
-            {formatDateJP(date)}の朝、起きたときのすっきり度と睡眠データ
-          </p>
+      <section className="rounded-2xl border border-border bg-surface p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium">朝の記録</h2>
+          <Link
+            href={`/log/morning${dateQuery}`}
+            className="text-xs text-primary hover:underline"
+          >
+            編集する &rarr;
+          </Link>
         </div>
 
-        <MorningForm
-          key={`morning-${date}`}
-          date={date}
-          initialData={morningInitialData}
-        />
+        {freshnessScore != null ? (
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{freshnessEmojis[freshnessScore] ?? ""}</span>
+            <span className="text-sm text-text">すっきり度 {freshnessScore}/5</span>
+          </div>
+        ) : (
+          <p className="text-sm text-text-muted">未記入</p>
+        )}
+
+        <SleepSummaryCard record={sleepRecord} />
       </section>
 
-      <hr className="border-border" />
-
       {/* Evening section */}
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold">夜の記録</h2>
-          <p className="text-xs text-text-muted">
-            {formatDateJP(date)}の日中のストレスや、寝る前の習慣
-          </p>
-          <p className="mt-1 text-[11px] text-text-muted">
-            0時を過ぎても寝る前なら、まだこの日の記録でOK
-          </p>
+      <section className="rounded-2xl border border-border bg-surface p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium">夜の記録</h2>
+          <Link
+            href={`/log/evening${dateQuery}`}
+            className="text-xs text-primary hover:underline"
+          >
+            編集する &rarr;
+          </Link>
         </div>
 
-        <EveningForm
-          key={`evening-${date}`}
-          date={date}
-          initialData={
-            dailyLog
-              ? {
-                  stressSources: (dailyLog.stressSources as Record<string, number>) ?? {},
-                  alcohol: dailyLog.alcohol ?? false,
-                  exercise: dailyLog.exercise ?? false,
-                  socializing: dailyLog.socializing ?? false,
-                  bathing: dailyLog.bathing ?? false,
-                  intenseFocus: dailyLog.intenseFocus ?? false,
-                  reading: dailyLog.reading ?? false,
-                  lateMeal: dailyLog.lateMeal ?? false,
-                  note: dailyLog.note ?? "",
-                }
-              : null
-          }
-        />
+        {stressTotal > 0 ? (
+          <div className="space-y-2">
+            <p className="text-sm text-text">ストレス合計: {stressTotal}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(stressSources!)
+                .filter(([, v]) => v > 0)
+                .map(([key, val]) => (
+                  <span
+                    key={key}
+                    className="rounded-full border border-accent-purple/40 bg-accent-purple/10 px-2 py-0.5 text-xs text-text"
+                  >
+                    {stressLabels[key] ?? key} {val}
+                  </span>
+                ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-text-muted">ストレス: 記録なし</p>
+        )}
+
+        {activeHabits.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {activeHabits.map((h) => (
+              <span
+                key={h.key}
+                className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs text-text"
+              >
+                {h.icon} {h.label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {dailyLog?.note ? (
+          <p className="text-sm text-text whitespace-pre-wrap">{dailyLog.note}</p>
+        ) : null}
+
+        {!stressTotal && activeHabits.length === 0 && !dailyLog?.note && (
+          <p className="text-sm text-text-muted">未記入</p>
+        )}
       </section>
     </div>
   );
