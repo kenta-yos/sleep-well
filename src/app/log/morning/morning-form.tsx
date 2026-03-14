@@ -120,29 +120,6 @@ export function MorningForm({
 
       <hr className="border-border" />
 
-      {/* Bedtime / Wake time */}
-      <section className="space-y-2">
-        <h3 className="text-sm font-medium text-text-muted">就寝・起床時刻</h3>
-        <div className="flex justify-center gap-8">
-          <TimeWheelPicker
-            hours={bedtimeH}
-            minutes={bedtimeM}
-            onChangeHours={setBedtimeH}
-            onChangeMinutes={setBedtimeM}
-            label="就寝"
-          />
-          <TimeWheelPicker
-            hours={wakeH}
-            minutes={wakeM}
-            onChangeHours={setWakeH}
-            onChangeMinutes={setWakeM}
-            label="起床"
-          />
-        </div>
-      </section>
-
-      <hr className="border-border" />
-
       {/* Total sleep */}
       <section className="space-y-2">
         <h3 className="text-sm font-medium text-text-muted">総睡眠時間</h3>
@@ -190,6 +167,29 @@ export function MorningForm({
             step={5}
             label="深い睡眠"
             formatValue={formatMinutesAsHM}
+          />
+        </div>
+      </section>
+
+      <hr className="border-border" />
+
+      {/* Bedtime / Wake time */}
+      <section className="space-y-2">
+        <h3 className="text-sm font-medium text-text-muted">就寝・起床時刻</h3>
+        <div className="flex justify-center gap-8">
+          <TimeWheelPicker
+            hours={bedtimeH}
+            minutes={bedtimeM}
+            onChangeHours={setBedtimeH}
+            onChangeMinutes={setBedtimeM}
+            label="就寝"
+          />
+          <TimeWheelPicker
+            hours={wakeH}
+            minutes={wakeM}
+            onChangeHours={setWakeH}
+            onChangeMinutes={setWakeM}
+            label="起床"
           />
         </div>
       </section>
