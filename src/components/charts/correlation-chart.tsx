@@ -386,7 +386,7 @@ export function CorrelationChart({
               {byLevel.map((row) => (
                 <tr key={row.level}>
                   <td className="px-3 py-2 font-medium">
-                    {"😫😕😐🙂😊"[row.level - 1]} {row.level}
+                    {["😫", "😕", "😐", "🙂", "😊"][row.level - 1]} {row.level}
                   </td>
                   <td className="px-3 py-2 text-right text-text-muted">
                     {row.n}日
