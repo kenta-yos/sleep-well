@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 function getMonthOptions(): { label: string; year: number; month: number }[] {
   const now = new Date();
@@ -17,6 +17,59 @@ function getMonthOptions(): { label: string; year: number; month: number }[] {
   return options;
 }
 
+const STEPS = [
+  { pct: 15, label: "データを取得中..." },
+  { pct: 35, label: "睡眠データを分析中..." },
+  { pct: 55, label: "ストレス傾向を分析中..." },
+  { pct: 75, label: "日記を読み込み中..." },
+  { pct: 90, label: "サマリーを生成中..." },
+];
+
+function useProgress(running: boolean) {
+  const [progress, setProgress] = useState(0);
+  const [label, setLabel] = useState("");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stepRef = useRef(0);
+
+  const advance = useCallback(() => {
+    if (stepRef.current < STEPS.length) {
+      const step = STEPS[stepRef.current];
+      setProgress(step.pct);
+      setLabel(step.label);
+      stepRef.current++;
+      // Each step takes 3-6 seconds (randomized for natural feel)
+      const delay = 3000 + Math.random() * 3000;
+      timerRef.current = setTimeout(advance, delay);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (running) {
+      stepRef.current = 0;
+      setProgress(0);
+      setLabel("");
+      // Start first step after a short delay
+      timerRef.current = setTimeout(advance, 500);
+    } else {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (stepRef.current > 0) {
+        // Finish animation
+        setProgress(100);
+        setLabel("完了!");
+        timerRef.current = setTimeout(() => {
+          setProgress(0);
+          setLabel("");
+        }, 600);
+      }
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [running, advance]);
+
+  return { progress, label };
+}
+
 export function ReviewClient({
   initialContent,
   initialDate,
@@ -28,6 +81,7 @@ export function ReviewClient({
   const [date, setDate] = useState(initialDate);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const { progress, label } = useProgress(isPending);
 
   const monthOptions = getMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState(
@@ -85,8 +139,23 @@ export function ReviewClient({
         disabled={isPending}
         className="w-full rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
       >
-        {isPending ? "生成中..." : `${selectedMonth.label}のサマリーを生成`}
+        {isPending
+          ? `${progress}%`
+          : `${selectedMonth.label}のサマリーを生成`}
       </button>
+
+      {/* Progress bar */}
+      {isPending && (
+        <div className="space-y-1.5">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-background">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-1000 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-xs text-text-muted">{label}</p>
+        </div>
+      )}
 
       {error && (
         <div className="rounded-xl border border-accent-red/30 bg-accent-red/10 p-4 text-sm text-accent-red">
