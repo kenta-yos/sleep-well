@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { generateMonthlyReviewAction } from "@/actions/ai-actions";
+import { useState } from "react";
 
 function getMonthOptions(): { label: string; year: number; month: number }[] {
   const now = new Date();
@@ -28,29 +27,39 @@ export function ReviewClient({
   const [content, setContent] = useState(initialContent);
   const [date, setDate] = useState(initialDate);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
   const monthOptions = getMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState(
     () => monthOptions[1] ?? monthOptions[0]
   );
 
-  function handleGenerate() {
+  async function handleGenerate() {
     setError(null);
-    startTransition(async () => {
-      const result = await generateMonthlyReviewAction(
-        selectedMonth.year,
-        selectedMonth.month
-      );
-      if (result.error) {
-        setError(result.error);
+    setIsPending(true);
+    try {
+      const res = await fetch("/api/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year: selectedMonth.year,
+          month: selectedMonth.month,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "エラーが発生しました");
       } else {
-        setContent(result.content);
+        setContent(data.content);
         setDate(
           `${selectedMonth.year}-${String(selectedMonth.month).padStart(2, "0")}-01`
         );
       }
-    });
+    } catch {
+      setError("通信エラーが発生しました");
+    } finally {
+      setIsPending(false);
+    }
   }
 
   return (

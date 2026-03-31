@@ -1,16 +1,29 @@
-"use server";
-
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { aiInsights } from "@/lib/db/schema";
 import { getMonthlyData } from "@/lib/db/queries";
 import { generateMonthlySummary } from "@/lib/ai";
 
-export async function generateMonthlyReviewAction(year: number, month: number) {
+export const maxDuration = 60;
+
+export async function POST(req: NextRequest) {
   try {
+    const { year, month } = await req.json();
+
+    if (!year || !month) {
+      return NextResponse.json(
+        { error: "year と month が必要です" },
+        { status: 400 }
+      );
+    }
+
     const { sleep, logs } = await getMonthlyData(year, month);
 
     if (sleep.length === 0) {
-      return { error: "その月の睡眠データがありません", content: null };
+      return NextResponse.json(
+        { error: "その月の睡眠データがありません" },
+        { status: 404 }
+      );
     }
 
     const content = await generateMonthlySummary(sleep, logs, year, month);
@@ -22,11 +35,14 @@ export async function generateMonthlyReviewAction(year: number, month: number) {
       content,
     });
 
-    return { error: null, content };
+    return NextResponse.json({ content });
   } catch (e) {
     console.error("Monthly review generation failed:", e);
     const message =
       e instanceof Error ? e.message : "不明なエラーが発生しました";
-    return { error: `生成に失敗しました: ${message}`, content: null };
+    return NextResponse.json(
+      { error: `生成に失敗しました: ${message}` },
+      { status: 500 }
+    );
   }
 }
