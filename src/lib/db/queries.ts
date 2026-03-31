@@ -84,6 +84,16 @@ export async function getLatestWeeklyInsight() {
   return insight ?? null;
 }
 
+export async function getLatestMonthlyInsight() {
+  const [insight] = await db
+    .select()
+    .from(aiInsights)
+    .where(eq(aiInsights.type, "monthly"))
+    .orderBy(desc(aiInsights.date))
+    .limit(1);
+  return insight ?? null;
+}
+
 export async function getSleepRecordCount() {
   const [result] = await db
     .select({ count: sql<number>`count(*)` })
