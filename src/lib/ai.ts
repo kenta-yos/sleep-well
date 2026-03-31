@@ -5,6 +5,23 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+function toJST(iso: string | Date | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return new Date(d.getTime() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d+Z$/, "");
+}
+
+function toJSTDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return new Date(d.getTime() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+}
+
 const TONE_INSTRUCTION = `## トーン
 - カジュアルだけど馴れ馴れしくない、程よい距離感で
 - 具体的な数値を使って説明する
@@ -16,18 +33,18 @@ function buildDataBlock(
   dailyLogs: DailyLog[]
 ): string {
   const sleepSummary = sleepRecords.map((r) => ({
-    date: r.date,
+    date: toJSTDate(r.date),
     totalMin: r.totalSleepMinutes,
     deepMin: r.deepMinutes,
     lightMin: r.lightMinutes,
     remMin: r.remMinutes,
-    bedtime: r.bedtime,
-    wakeTime: r.wakeTime,
+    bedtime: toJST(r.bedtime as unknown as string),
+    wakeTime: toJST(r.wakeTime as unknown as string),
     avgHR: r.avgHeartRate,
   }));
 
   const logSummary = dailyLogs.map((l) => ({
-    date: l.date,
+    date: toJSTDate(l.date),
     freshness: l.freshnessScore,
     stressSources: l.stressSources,
     alcohol: l.alcohol,
@@ -40,7 +57,7 @@ function buildDataBlock(
     note: l.note,
   }));
 
-  return `## データ
+  return `## データ（すべて日本時間 JST）
 睡眠データ:
 ${JSON.stringify(sleepSummary, null, 2)}
 
