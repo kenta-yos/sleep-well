@@ -5,10 +5,16 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-export async function generateWeeklyReview(
+const TONE_INSTRUCTION = `## トーン
+- カジュアルだけど馴れ馴れしくない、程よい距離感で
+- 具体的な数値を使って説明する
+- 日記の固有名詞はそのまま使ってOK
+- Markdown見出し（##）を使って構造化する`;
+
+function buildDataBlock(
   sleepRecords: SleepRecord[],
   dailyLogs: DailyLog[]
-): Promise<string> {
+): string {
   const sleepSummary = sleepRecords.map((r) => ({
     date: r.date,
     totalMin: r.totalSleepMinutes,
@@ -34,32 +40,35 @@ export async function generateWeeklyReview(
     note: l.note,
   }));
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `あなたは睡眠コーチです。以下の1週間の睡眠データと生活習慣ログを分析し、日本語で簡潔なレビューを書いてください。
-
-## 分析の観点
-1. 睡眠の質の傾向（深い睡眠の割合、睡眠時間）
-2. 生活習慣と睡眠の質の相関（飲酒、運動、交流、入浴、集中、読書、遅食、ストレスなど）
-3. 就寝・起床時間の規則性
-4. 具体的な改善提案（1-2個に絞る）
-
-## データ
+  return `## データ
 睡眠データ:
 ${JSON.stringify(sleepSummary, null, 2)}
 
 生活習慣ログ:
-${JSON.stringify(logSummary, null, 2)}
+${JSON.stringify(logSummary, null, 2)}`;
+}
 
-## 注意
-- 口語的でフレンドリーなトーン
-- データが少ない場合は正直に伝える
-- 具体的な数値を使って説明する
-- 200-400字程度で`,
+export async function generateWeeklyReview(
+  sleepRecords: SleepRecord[],
+  dailyLogs: DailyLog[]
+): Promise<string> {
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1500,
+    messages: [
+      {
+        role: "user",
+        content: `以下の1週間の睡眠データと生活習慣ログを分析し、日本語でレビューを書いてください。
+
+## 構成（この順番で書いてください）
+1. **睡眠の傾向** — 睡眠時間・深い睡眠・REMの傾向、就寝/起床リズム、すっきり度との関連。日記の内容も踏まえて、睡眠に影響していそうな出来事があれば触れる。
+2. **ストレスの傾向** — どのカテゴリのストレスが多かったか、日記の内容を踏まえて具体的に何がストレスだったのか。
+3. **今週のまとめ** — どんな1週間だったかを日記ベースでやや詳しくまとめる。良かったこと、大変だったこと、印象的な出来事など。
+
+${buildDataBlock(sleepRecords, dailyLogs)}
+
+${TONE_INSTRUCTION}
+- 400-600字程度で`,
       },
     ],
   });
@@ -74,60 +83,23 @@ export async function generateMonthlySummary(
   year: number,
   month: number
 ): Promise<string> {
-  const sleepSummary = sleepRecords.map((r) => ({
-    date: r.date,
-    totalMin: r.totalSleepMinutes,
-    deepMin: r.deepMinutes,
-    lightMin: r.lightMinutes,
-    remMin: r.remMinutes,
-    bedtime: r.bedtime,
-    wakeTime: r.wakeTime,
-    avgHR: r.avgHeartRate,
-  }));
-
-  const logSummary = dailyLogs.map((l) => ({
-    date: l.date,
-    freshness: l.freshnessScore,
-    stressSources: l.stressSources,
-    alcohol: l.alcohol,
-    exercise: l.exercise,
-    socializing: l.socializing,
-    bathing: l.bathing,
-    intenseFocus: l.intenseFocus,
-    reading: l.reading,
-    lateMeal: l.lateMeal,
-    note: l.note,
-  }));
-
   const message = await client.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 2048,
+    max_tokens: 3000,
     messages: [
       {
         role: "user",
-        content: `あなたは睡眠コーチです。以下の${year}年${month}月の1ヶ月分の睡眠データと生活習慣ログを分析し、日本語で月次サマリーを書いてください。
+        content: `以下の${year}年${month}月の1ヶ月分の睡眠データと生活習慣ログを分析し、日本語で月次サマリーを書いてください。
 
-## 分析の観点
-1. 睡眠の全体傾向（平均睡眠時間、深い睡眠・REM睡眠の割合、週ごとの変化）
-2. すっきり度の傾向（平均、特に良かった日・悪かった日の共通点）
-3. ストレスの傾向（どのカテゴリが多いか、月内での変化）
-4. 生活習慣の傾向（運動・飲酒・交流の頻度と睡眠への影響）
-5. 日記から読み取れる心理的な傾向や変化
-6. 来月に向けた具体的なアドバイス（2-3個）
+## 構成（この順番で書いてください）
+1. **睡眠の傾向** — 平均睡眠時間、深い睡眠・REMの割合、就寝/起床リズムの安定度、すっきり度の分布。週ごとの変化があれば触れる。日記から読み取れる睡眠に影響した出来事にも言及。
+2. **ストレスの傾向** — どのカテゴリ（仕事・恋愛・将来・友人等）が多かったか、月内での推移。日記を踏まえて、具体的に何がストレスだったのかを詳しく。
+3. **${month}月のまとめ** — どんな1ヶ月だったかを日記ベースで詳しくまとめる。仕事、人間関係、プライベートの活動、心境の変化、印象的なエピソードなど、振り返りとして読み応えのある内容にする。
 
-## データ
-睡眠データ:
-${JSON.stringify(sleepSummary, null, 2)}
+${buildDataBlock(sleepRecords, dailyLogs)}
 
-生活習慣ログ:
-${JSON.stringify(logSummary, null, 2)}
-
-## 注意
-- 口語的でフレンドリーなトーン
-- 具体的な数値を使って説明する
-- 日記の内容にも触れつつ、プライバシーに配慮する（固有名詞は使わず「友人」「同僚」等で表現）
-- 500-800字程度で
-- Markdown見出し（##）を使って構造化する`,
+${TONE_INSTRUCTION}
+- 800-1200字程度で、まとめパートは特に厚めに書く`,
       },
     ],
   });
