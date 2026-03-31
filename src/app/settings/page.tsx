@@ -19,7 +19,7 @@ export default function SettingsPage() {
           href="/review"
           className="flex min-h-[48px] items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm transition-colors hover:bg-surface-hover"
         >
-          <span>週次AIレビュー</span>
+          <span>月次サマリー</span>
           <ChevronRight />
         </Link>
       </div>
