@@ -5,14 +5,6 @@ import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 /* ── Spearman rank correlation ─────────────────────────────── */
 
-interface CorrelationResult {
-  label: string;
-  rho: number;
-  pValue: number;
-  n: number;
-  interpretation: string;
-}
-
 function rank(arr: number[]): number[] {
   const n = arr.length;
   const sorted = arr.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v);
@@ -83,7 +75,7 @@ function bedtimeToMinutes(iso: string): number {
   const d = new Date(iso);
   const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   let mins = jst.getHours() * 60 + jst.getMinutes();
-  if (mins < 12 * 60) mins += 24 * 60; // after midnight
+  if (mins < 12 * 60) mins += 24 * 60;
   return mins;
 }
 
@@ -93,20 +85,50 @@ function fmtTime(mins: number): string {
   return `${h}:${String(m).padStart(2, "0")}`;
 }
 
-function interpret(rho: number, pValue: number, n: number): string {
-  if (n < 10) return "データ不足";
-  if (pValue >= 0.1) return "有意な相関なし";
-  const strength = Math.abs(rho) >= 0.5 ? "強い" : "弱い";
-  const dir = rho > 0 ? "正" : "負";
-  return `${strength}${dir}の相関`;
+interface Variable {
+  question: string;
+  moreLabel: string;
+  lessLabel: string;
+  values: number[];
 }
 
-function sigLabel(pValue: number, n: number): string {
-  if (n < 10) return "";
-  if (pValue < 0.01) return "p<.01";
-  if (pValue < 0.05) return "p<.05";
-  if (pValue < 0.1) return "p<.10";
-  return "n.s.";
+interface Result {
+  question: string;
+  rho: number;
+  pValue: number;
+  n: number;
+  verdict: string;
+  confidence: "significant" | "trend" | "none" | "insufficient";
+}
+
+function getVerdict(
+  rho: number,
+  pValue: number,
+  n: number,
+  moreLabel: string,
+  lessLabel: string
+): { verdict: string; confidence: Result["confidence"] } {
+  if (n < 10)
+    return { verdict: "まだデータが少ないです", confidence: "insufficient" };
+
+  const dir = rho > 0 ? moreLabel : lessLabel;
+
+  if (pValue < 0.05) {
+    return {
+      verdict: `${dir}傾向あり`,
+      confidence: "significant",
+    };
+  }
+  if (pValue < 0.1) {
+    return {
+      verdict: `やや${dir}かも？`,
+      confidence: "trend",
+    };
+  }
+  return {
+    verdict: "今のところ関連なし",
+    confidence: "none",
+  };
 }
 
 /* ── Component ─────────────────────────────────────────────── */
@@ -121,15 +143,11 @@ export function CorrelationChart({
   const results = useMemo(() => {
     const logMap = new Map(logs.map((l) => [l.date, l]));
 
-    // Pair sleep record with same-date freshness & previous-day stress
     const pairs: {
       freshness: number;
       totalSleep: number;
       deep: number;
-      light: number;
       rem: number;
-      deepPct: number;
-      remPct: number;
       bedtime: number;
       wakeTime: number;
       heartRate: number | null;
@@ -140,7 +158,6 @@ export function CorrelationChart({
       const log = logMap.get(sr.date);
       if (!log?.freshnessScore || !sr.totalSleepMinutes) continue;
 
-      // Previous day's stress
       const prev = new Date(sr.date + "T00:00:00+09:00");
       prev.setDate(prev.getDate() - 1);
       const prevStr = prev.toISOString().split("T")[0];
@@ -155,14 +172,7 @@ export function CorrelationChart({
         freshness: log.freshnessScore,
         totalSleep: sr.totalSleepMinutes,
         deep: sr.deepMinutes ?? 0,
-        light: sr.lightMinutes ?? 0,
         rem: sr.remMinutes ?? 0,
-        deepPct: sr.deepMinutes
-          ? (sr.deepMinutes / sr.totalSleepMinutes) * 100
-          : 0,
-        remPct: sr.remMinutes
-          ? (sr.remMinutes / sr.totalSleepMinutes) * 100
-          : 0,
         bedtime: sr.bedtime
           ? bedtimeToMinutes(sr.bedtime as unknown as string)
           : 0,
@@ -178,64 +188,69 @@ export function CorrelationChart({
 
     const freshness = pairs.map((p) => p.freshness);
 
-    const variables: {
-      label: string;
-      values: number[];
-      unit: string;
-    }[] = [
+    const variables: Variable[] = [
       {
-        label: "睡眠時間",
+        question: "長く寝るほどすっきり？",
+        moreLabel: "長いほどすっきり",
+        lessLabel: "短いほどすっきり",
         values: pairs.map((p) => p.totalSleep),
-        unit: "分",
       },
       {
-        label: "深い睡眠",
+        question: "深い睡眠が多いほどすっきり？",
+        moreLabel: "多いほどすっきり",
+        lessLabel: "少ないほどすっきり",
         values: pairs.map((p) => p.deep),
-        unit: "分",
       },
       {
-        label: "REM睡眠",
+        question: "REM睡眠が多いほどすっきり？",
+        moreLabel: "多いほどすっきり",
+        lessLabel: "少ないほどすっきり",
         values: pairs.map((p) => p.rem),
-        unit: "分",
       },
       {
-        label: "浅い睡眠",
-        values: pairs.map((p) => p.light),
-        unit: "分",
-      },
-      {
-        label: "深い睡眠 %",
-        values: pairs.map((p) => p.deepPct),
-        unit: "%",
-      },
-      {
-        label: "REM %",
-        values: pairs.map((p) => p.remPct),
-        unit: "%",
-      },
-      {
-        label: "就寝時刻",
+        question: "早く寝るほどすっきり？",
+        moreLabel: "遅いほどすっきり",
+        lessLabel: "早いほどすっきり",
         values: pairs.map((p) => p.bedtime),
-        unit: "time",
       },
       {
-        label: "起床時刻",
+        question: "早く起きるほどすっきり？",
+        moreLabel: "遅いほどすっきり",
+        lessLabel: "早いほどすっきり",
         values: pairs.map((p) => p.wakeTime),
-        unit: "time",
       },
       {
-        label: "平均心拍",
+        question: "心拍が低いほどすっきり？",
+        moreLabel: "高いほどすっきり",
+        lessLabel: "低いほどすっきり",
         values: pairs.map((p) => p.heartRate ?? NaN),
-        unit: "bpm",
       },
       {
-        label: "前夜ストレス",
+        question: "ストレスが低いほどすっきり？",
+        moreLabel: "高いほどすっきり",
+        lessLabel: "低いほどすっきり",
         values: pairs.map((p) => p.stressTotal),
-        unit: "pt",
       },
     ];
 
-    // Also compute per-freshness-level means for the breakdown table
+    const analyzed: Result[] = variables.map((v) => {
+      const validIdx = v.values
+        .map((val, i) => (val != null && !isNaN(val) ? i : -1))
+        .filter((i) => i >= 0);
+      const vx = validIdx.map((i) => v.values[i]);
+      const vy = validIdx.map((i) => freshness[i]);
+      const { rho, pValue, n } = spearman(vx, vy);
+      const { verdict, confidence } = getVerdict(
+        rho,
+        pValue,
+        n,
+        v.moreLabel,
+        v.lessLabel
+      );
+      return { question: v.question, rho, pValue, n, verdict, confidence };
+    });
+
+    // Per-freshness-level means for breakdown table
     const freshLevels = [1, 2, 3, 4, 5].filter((f) =>
       pairs.some((p) => p.freshness === f)
     );
@@ -249,11 +264,7 @@ export function CorrelationChart({
         totalSleep: Math.round(avg(subset.map((s) => s.totalSleep))),
         deep: Math.round(avg(subset.map((s) => s.deep))),
         rem: Math.round(avg(subset.map((s) => s.rem))),
-        light: Math.round(avg(subset.map((s) => s.light))),
-        deepPct: +avg(subset.map((s) => s.deepPct)).toFixed(1),
-        remPct: +avg(subset.map((s) => s.remPct)).toFixed(1),
         bedtime: avg(subset.map((s) => s.bedtime)),
-        wakeTime: avg(subset.map((s) => s.wakeTime)),
         heartRate: +avg(
           subset.filter((s) => s.heartRate != null).map((s) => s.heartRate!)
         ).toFixed(1),
@@ -261,31 +272,13 @@ export function CorrelationChart({
       };
     });
 
-    const correlations: CorrelationResult[] = variables
-      .map((v) => {
-        const validIdx = v.values
-          .map((val, i) => (val != null && !isNaN(val) ? i : -1))
-          .filter((i) => i >= 0);
-        const vx = validIdx.map((i) => v.values[i]);
-        const vy = validIdx.map((i) => freshness[i]);
-        const { rho, pValue, n } = spearman(vx, vy);
-        return {
-          label: v.label,
-          rho,
-          pValue,
-          n,
-          interpretation: interpret(rho, pValue, n),
-        };
-      })
-      .sort((a, b) => Math.abs(b.rho) - Math.abs(a.rho));
-
-    return { correlations, byLevel, totalN: pairs.length };
+    return { analyzed, byLevel, totalN: pairs.length };
   }, [sleepRecords, logs]);
 
   if (!results) {
     return (
       <div className="space-y-2">
-        <h3 className="text-sm font-medium">統計分析</h3>
+        <h3 className="text-sm font-medium">すっきり度の分析</h3>
         <div className="flex h-32 items-center justify-center rounded-2xl border border-border bg-surface">
           <p className="px-4 text-center text-sm text-text-muted">
             分析にはもう少しデータが必要です（5日以上）
@@ -295,74 +288,67 @@ export function CorrelationChart({
     );
   }
 
-  const { correlations, byLevel, totalN } = results;
+  const { analyzed, byLevel, totalN } = results;
 
   return (
     <div className="space-y-4">
-      {/* Correlation table */}
       <div className="space-y-2">
         <h3 className="text-sm font-medium">
-          睡眠指標 × すっきり度{" "}
-          <span className="font-normal text-text-muted">
-            Spearman順位相関 (n={totalN})
-          </span>
+          何がすっきり度に影響してる？
         </h3>
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
-          <div className="divide-y divide-border">
-            {correlations.map((c) => (
-              <div
-                key={c.label}
-                className="flex items-center gap-3 px-4 py-3"
-              >
-                {/* Label */}
-                <span className="w-28 shrink-0 text-sm">{c.label}</span>
+        <p className="text-xs text-text-muted">
+          {totalN}日分のデータで統計分析した結果
+        </p>
 
-                {/* Bar visualization */}
-                <div className="flex-1 flex items-center gap-2">
-                  <div className="relative h-5 flex-1 rounded-full bg-background overflow-hidden">
-                    {/* Center line */}
-                    <div className="absolute left-1/2 top-0 h-full w-px bg-border" />
-                    {/* Correlation bar */}
+        <div className="space-y-2">
+          {analyzed.map((r) => (
+            <div
+              key={r.question}
+              className="rounded-2xl border border-border bg-surface px-4 py-3"
+            >
+              <p className="text-sm font-medium mb-1.5">{r.question}</p>
+              <div className="flex items-center gap-2">
+                {/* Verdict badge */}
+                <span
+                  className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    r.confidence === "significant"
+                      ? "bg-accent/15 text-accent"
+                      : r.confidence === "trend"
+                        ? "bg-yellow-500/15 text-yellow-600"
+                        : r.confidence === "insufficient"
+                          ? "bg-gray-500/10 text-text-muted"
+                          : "bg-gray-500/10 text-text-muted"
+                  }`}
+                >
+                  {r.verdict}
+                </span>
+
+                {/* Strength indicator dots */}
+                <div className="flex gap-0.5 ml-auto">
+                  {[0.1, 0.3, 0.5].map((threshold, i) => (
                     <div
-                      className={`absolute top-0.5 h-4 rounded-full transition-all ${
-                        c.rho >= 0 ? "bg-accent" : "bg-danger"
+                      key={i}
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        Math.abs(r.rho) >= threshold && r.pValue < 0.1
+                          ? "bg-accent"
+                          : "bg-border"
                       }`}
-                      style={{
-                        left: c.rho >= 0 ? "50%" : `${50 + c.rho * 50}%`,
-                        width: `${Math.abs(c.rho) * 50}%`,
-                        opacity: c.pValue < 0.1 ? 1 : 0.35,
-                      }}
                     />
-                  </div>
+                  ))}
                 </div>
 
-                {/* rho value */}
-                <span
-                  className={`w-14 text-right text-sm font-mono font-bold ${
-                    c.pValue < 0.1 ? "" : "text-text-muted"
-                  }`}
-                >
-                  {c.rho > 0 ? "+" : ""}
-                  {c.rho.toFixed(2)}
-                </span>
-
-                {/* Significance */}
-                <span
-                  className={`w-12 text-right text-xs ${
-                    c.pValue < 0.05
-                      ? "font-bold text-accent"
-                      : "text-text-muted"
-                  }`}
-                >
-                  {sigLabel(c.pValue, c.n)}
+                {/* Stats detail (subtle) */}
+                <span className="text-[10px] text-text-muted tabular-nums">
+                  r={r.rho > 0 ? "+" : ""}
+                  {r.rho.toFixed(2)}
                 </span>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-        <p className="text-[11px] text-text-muted px-1">
-          rho: -1(負の相関)〜+1(正の相関) / n.s.=有意でない /
-          p&lt;.05で統計的に有意
+
+        <p className="text-[11px] text-text-muted px-1 leading-relaxed">
+          Spearman順位相関で分析。データが増えると精度が上がります。
         </p>
       </div>
 
@@ -374,7 +360,7 @@ export function CorrelationChart({
             <thead>
               <tr className="border-b border-border text-text-muted">
                 <th className="px-3 py-2 text-left font-medium">すっきり</th>
-                <th className="px-3 py-2 text-right font-medium">n</th>
+                <th className="px-3 py-2 text-right font-medium">日数</th>
                 <th className="px-3 py-2 text-right font-medium">睡眠</th>
                 <th className="px-3 py-2 text-right font-medium">深い</th>
                 <th className="px-3 py-2 text-right font-medium">REM</th>
@@ -386,7 +372,8 @@ export function CorrelationChart({
               {byLevel.map((row) => (
                 <tr key={row.level}>
                   <td className="px-3 py-2 font-medium">
-                    {["😫", "😕", "😐", "🙂", "😊"][row.level - 1]} {row.level}
+                    {["😫", "😕", "😐", "🙂", "😊"][row.level - 1]}{" "}
+                    {row.level}
                   </td>
                   <td className="px-3 py-2 text-right text-text-muted">
                     {row.n}日
@@ -394,14 +381,8 @@ export function CorrelationChart({
                   <td className="px-3 py-2 text-right">
                     {Math.floor(row.totalSleep / 60)}h{row.totalSleep % 60}m
                   </td>
-                  <td className="px-3 py-2 text-right">
-                    {row.deep}m
-                    <span className="text-text-muted"> {row.deepPct}%</span>
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {row.rem}m
-                    <span className="text-text-muted"> {row.remPct}%</span>
-                  </td>
+                  <td className="px-3 py-2 text-right">{row.deep}分</td>
+                  <td className="px-3 py-2 text-right">{row.rem}分</td>
                   <td className="px-3 py-2 text-right">
                     {fmtTime(row.bedtime)}
                   </td>
