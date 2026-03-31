@@ -48,35 +48,6 @@ ${JSON.stringify(sleepSummary, null, 2)}
 ${JSON.stringify(logSummary, null, 2)}`;
 }
 
-export async function generateWeeklyReview(
-  sleepRecords: SleepRecord[],
-  dailyLogs: DailyLog[]
-): Promise<string> {
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1500,
-    messages: [
-      {
-        role: "user",
-        content: `以下の1週間の睡眠データと生活習慣ログを分析し、日本語でレビューを書いてください。
-
-## 構成（この順番で書いてください）
-1. **睡眠の傾向** — 睡眠時間・深い睡眠・REMの傾向、就寝/起床リズム、すっきり度との関連。日記の内容も踏まえて、睡眠に影響していそうな出来事があれば触れる。
-2. **ストレスの傾向** — どのカテゴリのストレスが多かったか、日記の内容を踏まえて具体的に何がストレスだったのか。
-3. **今週のまとめ** — どんな1週間だったかを日記ベースでやや詳しくまとめる。良かったこと、大変だったこと、印象的な出来事など。
-
-${buildDataBlock(sleepRecords, dailyLogs)}
-
-${TONE_INSTRUCTION}
-- 400-600字程度で`,
-      },
-    ],
-  });
-
-  const textBlock = message.content.find((b) => b.type === "text");
-  return textBlock?.text ?? "レビューを生成できませんでした";
-}
-
 export async function generateMonthlySummary(
   sleepRecords: SleepRecord[],
   dailyLogs: DailyLog[],
