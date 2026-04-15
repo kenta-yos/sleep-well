@@ -6,6 +6,7 @@ import { SleepDurationChart } from "@/components/charts/sleep-duration-chart";
 import { BedtimeChart } from "@/components/charts/bedtime-chart";
 import { StressHeatmap } from "@/components/charts/stress-heatmap";
 import { SleepStatsSummary } from "@/components/charts/sleep-stats-summary";
+import { QualityFactors } from "@/components/charts/quality-factors";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 /** Generate all YYYY-MM-DD strings from startDate to endDate inclusive */
@@ -97,6 +98,11 @@ export function TrendsClient({
     return sleepRecords.filter((r) => r.date >= cutoff);
   }, [sleepRecords, days]);
 
+  const filteredLogs = useMemo(() => {
+    const cutoff = getDaysAgo(days);
+    return dailyLogs.filter((l) => l.date >= cutoff);
+  }, [dailyLogs, days]);
+
   return (
     <div className="space-y-6">
       <PeriodSelector value={days} onChange={setDays} />
@@ -105,6 +111,7 @@ export function TrendsClient({
       <SleepDurationChart data={durationData} />
       <BedtimeChart data={bedtimeData} />
       <StressHeatmap data={stressData} />
+      <QualityFactors sleepRecords={filteredSleep} dailyLogs={filteredLogs} />
     </div>
   );
 }
