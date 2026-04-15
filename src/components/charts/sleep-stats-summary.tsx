@@ -2,9 +2,13 @@
 
 import type { SleepRecord } from "@/lib/db/schema";
 
-function avg(nums: number[]): number | null {
+function median(nums: number[]): number | null {
   if (nums.length === 0) return null;
-  return nums.reduce((a, b) => a + b, 0) / nums.length;
+  const sorted = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
 }
 
 function formatMin(min: number): string {
@@ -49,33 +53,33 @@ export function SleepStatsSummary({
   records: SleepRecord[];
 }) {
   const withSleep = records.filter((r) => r.totalSleepMinutes && r.totalSleepMinutes > 0);
-  const avgSleep = avg(withSleep.map((r) => r.totalSleepMinutes!));
+  const medSleep = median(withSleep.map((r) => r.totalSleepMinutes!));
 
   const withBedtime = records.filter((r) => r.bedtime);
-  const avgBedNM = avg(
+  const medBedNM = median(
     withBedtime.map((r) => toNightMinutes(r.bedtime as unknown as string))
   );
 
   const withWake = records.filter((r) => r.wakeTime);
-  const avgWakeMM = avg(
+  const medWakeMM = median(
     withWake.map((r) => toMorningMinutes(r.wakeTime as unknown as string))
   );
 
   const items: { label: string; value: string; sub?: string }[] = [
     {
-      label: "平均睡眠時間",
-      value: avgSleep != null ? formatMin(avgSleep) : "—",
-      sub: avgSleep != null ? `${withSleep.length}日` : undefined,
+      label: "睡眠時間（中央値）",
+      value: medSleep != null ? formatMin(medSleep) : "—",
+      sub: medSleep != null ? `${withSleep.length}日` : undefined,
     },
     {
-      label: "平均就寝時刻",
-      value: avgBedNM != null ? nightMinutesToTime(avgBedNM) : "—",
-      sub: avgBedNM != null ? `${withBedtime.length}日` : undefined,
+      label: "就寝時刻（中央値）",
+      value: medBedNM != null ? nightMinutesToTime(medBedNM) : "—",
+      sub: medBedNM != null ? `${withBedtime.length}日` : undefined,
     },
     {
-      label: "平均起床時刻",
-      value: avgWakeMM != null ? morningMinutesToTime(avgWakeMM) : "—",
-      sub: avgWakeMM != null ? `${withWake.length}日` : undefined,
+      label: "起床時刻（中央値）",
+      value: medWakeMM != null ? morningMinutesToTime(medWakeMM) : "—",
+      sub: medWakeMM != null ? `${withWake.length}日` : undefined,
     },
   ];
 
