@@ -17,10 +17,10 @@ const categories: { id: string; label: string }[] = [
 
 // 0 = no data, 1..4 = score 0..3
 function cellClass(score: number | null): string {
-  if (score == null) return "bg-surface border border-border/40";
-  if (score === 0) return "bg-accent-purple/5 border border-border/40";
-  if (score === 1) return "bg-accent-purple/25";
-  if (score === 2) return "bg-accent-purple/55";
+  if (score == null) return "bg-[#1a1a2e] border border-border/30";
+  if (score === 0) return "bg-[#1a1a2e] border border-border/30";
+  if (score === 1) return "bg-accent-purple/45";
+  if (score === 2) return "bg-accent-purple/75";
   return "bg-accent-purple";
 }
 
@@ -51,12 +51,12 @@ export function StressHeatmap({ data }: { data: DataPoint[] }) {
         <div
           className="grid gap-[2px]"
           style={{
-            gridTemplateColumns: `minmax(72px, auto) repeat(${data.length}, minmax(10px, 1fr))`,
+            gridTemplateColumns: `max-content repeat(${data.length}, minmax(10px, 1fr))`,
           }}
         >
           {categories.map((cat) => (
             <div key={cat.id} className="contents">
-              <div className="pr-2 text-[11px] text-text-muted flex items-center">
+              <div className="pr-2 text-[11px] text-text-muted flex items-center whitespace-nowrap">
                 {cat.label}
               </div>
               {data.map((d) => {
@@ -89,18 +89,14 @@ export function StressHeatmap({ data }: { data: DataPoint[] }) {
 
       {/* Legend */}
       <div className="flex items-center gap-2 text-[10px] text-text-muted">
-        <span>低</span>
+        <span>なし</span>
         <div className="flex gap-[2px]">
-          <div className="h-3 w-3 rounded-[3px] bg-accent-purple/5 border border-border/40" />
-          <div className="h-3 w-3 rounded-[3px] bg-accent-purple/25" />
-          <div className="h-3 w-3 rounded-[3px] bg-accent-purple/55" />
+          <div className="h-3 w-3 rounded-[3px] bg-[#1a1a2e] border border-border/30" />
+          <div className="h-3 w-3 rounded-[3px] bg-accent-purple/45" />
+          <div className="h-3 w-3 rounded-[3px] bg-accent-purple/75" />
           <div className="h-3 w-3 rounded-[3px] bg-accent-purple" />
         </div>
         <span>高</span>
-        <span className="ml-3 flex items-center gap-1">
-          <div className="h-3 w-3 rounded-[3px] bg-surface border border-border/40" />
-          記録なし
-        </span>
       </div>
     </div>
   );
