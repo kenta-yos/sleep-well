@@ -45,3 +45,4 @@ next-env.d.ts
 # PWA (generated files only)
 public/workbox-*.js
 public/workbox-*.js.map
+.claude/
