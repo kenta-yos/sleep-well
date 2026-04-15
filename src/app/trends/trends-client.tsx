@@ -4,8 +4,8 @@ import { useState, useMemo } from "react";
 import { PeriodSelector } from "@/components/ui/period-selector";
 import { SleepDurationChart } from "@/components/charts/sleep-duration-chart";
 import { BedtimeChart } from "@/components/charts/bedtime-chart";
-import { CorrelationChart } from "@/components/charts/correlation-chart";
-import { StressChart } from "@/components/charts/stress-chart";
+import { StressHeatmap } from "@/components/charts/stress-heatmap";
+import { SleepStatsSummary } from "@/components/charts/sleep-stats-summary";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 /** Generate all YYYY-MM-DD strings from startDate to endDate inclusive */
@@ -46,7 +46,6 @@ export function TrendsClient({
 }) {
   const [days, setDays] = useState(30);
 
-  // Build maps for O(1) lookup
   const sleepMap = useMemo(() => {
     const map = new Map<string, SleepRecord>();
     for (const r of sleepRecords) map.set(r.date, r);
@@ -59,7 +58,6 @@ export function TrendsClient({
     return map;
   }, [dailyLogs]);
 
-  // Continuous date range with no gaps
   const dateRange = useMemo(
     () => generateDateRange(getDaysAgo(days), getTodayLocal()),
     [days]
@@ -73,7 +71,6 @@ export function TrendsClient({
       light: r?.lightMinutes ?? 0,
       rem: r?.remMinutes ?? 0,
       totalMinutes: r?.totalSleepMinutes ?? 0,
-      freshness: logMap.get(date)?.freshnessScore ?? undefined,
     };
   });
 
@@ -94,25 +91,19 @@ export function TrendsClient({
     };
   });
 
-  // For correlation, only pass actual records
   const filteredSleep = useMemo(() => {
     const cutoff = getDaysAgo(days);
     return sleepRecords.filter((r) => r.date >= cutoff);
   }, [sleepRecords, days]);
 
-  const filteredLogs = useMemo(() => {
-    const cutoff = getDaysAgo(days);
-    return dailyLogs.filter((l) => l.date >= cutoff);
-  }, [dailyLogs, days]);
-
   return (
     <div className="space-y-6">
       <PeriodSelector value={days} onChange={setDays} />
 
+      <SleepStatsSummary records={filteredSleep} />
       <SleepDurationChart data={durationData} />
-      <StressChart data={stressData} />
       <BedtimeChart data={bedtimeData} />
-      <CorrelationChart sleepRecords={filteredSleep} logs={filteredLogs} />
+      <StressHeatmap data={stressData} />
     </div>
   );
 }
