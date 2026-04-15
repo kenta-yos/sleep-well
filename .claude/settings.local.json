@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(find /Users/yoshiikenta/sleep-well -name *.md -o -name README*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx next:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(vercel ls:*)",
+      "Bash(vercel logs:*)",
+      "Bash(vercel env:*)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

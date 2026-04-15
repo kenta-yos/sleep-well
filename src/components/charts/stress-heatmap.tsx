@@ -16,12 +16,13 @@ const categories: { id: string; label: string }[] = [
 ];
 
 // 0 = no data, 1..4 = score 0..3
-function cellClass(score: number | null): string {
-  if (score == null) return "bg-[#1a1a2e] border border-border/30";
-  if (score === 0) return "bg-[#1a1a2e] border border-border/30";
-  if (score === 1) return "bg-accent-purple/45";
-  if (score === 2) return "bg-accent-purple/75";
-  return "bg-accent-purple";
+function cellStyle(score: number | null): React.CSSProperties {
+  if (score == null || score === 0) {
+    return { background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" };
+  }
+  if (score === 1) return { background: "oklch(0.60 0.13 230)" }; // blue
+  if (score === 2) return { background: "oklch(0.70 0.17 60)" };  // amber
+  return { background: "oklch(0.60 0.22 25)" };                    // red
 }
 
 function scoreLabel(score: number | null): string {
@@ -47,11 +48,11 @@ export function StressHeatmap({ data }: { data: DataPoint[] }) {
         </p>
       </div>
 
-      <div className="overflow-x-auto">
+      <div>
         <div
           className="grid gap-[2px]"
           style={{
-            gridTemplateColumns: `max-content repeat(${data.length}, minmax(10px, 1fr))`,
+            gridTemplateColumns: `max-content repeat(${data.length}, minmax(0, 1fr))`,
           }}
         >
           {categories.map((cat) => (
@@ -66,7 +67,8 @@ export function StressHeatmap({ data }: { data: DataPoint[] }) {
                 return (
                   <div
                     key={`${cat.id}-${d.date}`}
-                    className={`aspect-square rounded-[3px] ${cellClass(score)}`}
+                    className="aspect-square rounded-[3px]"
+                    style={cellStyle(score)}
                     title={`${d.date.slice(5)} ${cat.label}: ${scoreLabel(score)}`}
                   />
                 );
@@ -88,15 +90,23 @@ export function StressHeatmap({ data }: { data: DataPoint[] }) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-2 text-[10px] text-text-muted">
-        <span>なし</span>
-        <div className="flex gap-[2px]">
-          <div className="h-3 w-3 rounded-[3px] bg-[#1a1a2e] border border-border/30" />
-          <div className="h-3 w-3 rounded-[3px] bg-accent-purple/45" />
-          <div className="h-3 w-3 rounded-[3px] bg-accent-purple/75" />
-          <div className="h-3 w-3 rounded-[3px] bg-accent-purple" />
-        </div>
-        <span>高</span>
+      <div className="flex items-center gap-3 text-[10px] text-text-muted">
+        <span className="flex items-center gap-1">
+          <div className="h-3 w-3 rounded-[3px]" style={cellStyle(0)} />
+          なし
+        </span>
+        <span className="flex items-center gap-1">
+          <div className="h-3 w-3 rounded-[3px]" style={cellStyle(1)} />
+          低
+        </span>
+        <span className="flex items-center gap-1">
+          <div className="h-3 w-3 rounded-[3px]" style={cellStyle(2)} />
+          中
+        </span>
+        <span className="flex items-center gap-1">
+          <div className="h-3 w-3 rounded-[3px]" style={cellStyle(3)} />
+          高
+        </span>
       </div>
     </div>
   );

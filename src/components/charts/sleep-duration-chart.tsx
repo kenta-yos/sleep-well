@@ -2,6 +2,7 @@
 
 import {
   Bar,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -15,6 +16,7 @@ interface DataPoint {
   light: number;
   rem: number;
   totalMinutes: number;
+  freshness?: number;
 }
 
 function formatMin(min: number): string {
@@ -40,7 +42,7 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium">睡眠時間</h3>
+      <h3 className="text-sm font-medium">睡眠時間 & すっきり度</h3>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ left: -20, right: 5 }}>
@@ -55,11 +57,18 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
               domain={[0, "auto"]}
               label={{ value: "時間", angle: -90, position: "insideLeft", fontSize: 10, fill: "#888" }}
             />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              domain={[0, 5]}
+              tick={{ fontSize: 10, fill: "#888" }}
+              hide
+            />
             <Tooltip
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const d = payload[0].payload;
-                if (!d.totalMinutes) return null;
+                if (!d.totalMinutes && d.freshness == null) return null;
                 return (
                   <div className="rounded-xl border border-[#333] bg-[#1a1a2e] px-3 py-2 text-xs">
                     <p className="text-text-muted">{d.label}</p>
@@ -69,6 +78,7 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
                     {d.deepH > 0 && <p>深い: {d.deepH}h</p>}
                     {d.lightH > 0 && <p>浅い: {d.lightH}h</p>}
                     {d.remH > 0 && <p>REM: {d.remH}h</p>}
+                    {d.freshness != null && <p>すっきり度: {d.freshness}/5</p>}
                   </div>
                 );
               }}
@@ -76,6 +86,15 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
             <Bar yAxisId="left" dataKey="deepH" stackId="sleep" fill="oklch(0.5 0.2 270)" radius={[0, 0, 0, 0]} />
             <Bar yAxisId="left" dataKey="lightH" stackId="sleep" fill="oklch(0.7 0.12 250)" radius={[0, 0, 0, 0]} />
             <Bar yAxisId="left" dataKey="remH" stackId="sleep" fill="oklch(0.65 0.18 300)" radius={[4, 4, 0, 0]} />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="freshness"
+              stroke="oklch(0.72 0.17 155)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              connectNulls
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
