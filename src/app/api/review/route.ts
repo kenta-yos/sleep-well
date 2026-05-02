@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { aiInsights } from "@/lib/db/schema";
-import { getMonthlyData, getMonthlyInsight } from "@/lib/db/queries";
+import {
+  getMonthlyData,
+  getMonthlyInsight,
+  getPreviousMonthlyInsights,
+} from "@/lib/db/queries";
 import { generateMonthlySummary } from "@/lib/ai";
 
 export const maxDuration = 60;
@@ -45,7 +49,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const content = await generateMonthlySummary(sleep, logs, year, month);
+    const previousSummaries = await getPreviousMonthlyInsights(year, month, 3);
+
+    const content = await generateMonthlySummary(
+      sleep,
+      logs,
+      year,
+      month,
+      previousSummaries.reverse()
+    );
 
     const pad = (n: number) => String(n).padStart(2, "0");
     await db.insert(aiInsights).values({
