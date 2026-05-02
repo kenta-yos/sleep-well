@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { aiInsights } from "@/lib/db/schema";
-import { getMonthlyData } from "@/lib/db/queries";
+import { getMonthlyData, getMonthlyInsight } from "@/lib/db/queries";
 import { generateMonthlySummary } from "@/lib/ai";
 
 export const maxDuration = 60;
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const year = Number(searchParams.get("year"));
+  const month = Number(searchParams.get("month"));
+
+  if (!year || !month) {
+    return NextResponse.json(
+      { error: "year と month が必要です" },
+      { status: 400 }
+    );
+  }
+
+  const insight = await getMonthlyInsight(year, month);
+  return NextResponse.json({
+    content: insight?.content ?? null,
+    date: insight?.date ?? null,
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {

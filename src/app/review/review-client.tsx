@@ -83,10 +83,36 @@ export function ReviewClient({
   const [isPending, setIsPending] = useState(false);
   const { progress, label } = useProgress(isPending);
 
+  const [loading, setLoading] = useState(false);
   const monthOptions = getMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState(
     () => monthOptions[1] ?? monthOptions[0]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchExisting() {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/review?year=${selectedMonth.year}&month=${selectedMonth.month}`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setContent(data.content);
+          setDate(data.date);
+          setError(null);
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    fetchExisting();
+    return () => { cancelled = true; };
+  }, [selectedMonth]);
 
   async function handleGenerate() {
     setError(null);

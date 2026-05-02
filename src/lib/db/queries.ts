@@ -94,6 +94,17 @@ export async function getLatestMonthlyInsight() {
   return insight ?? null;
 }
 
+export async function getMonthlyInsight(year: number, month: number) {
+  const date = `${year}-${String(month).padStart(2, "0")}-01`;
+  const [insight] = await db
+    .select()
+    .from(aiInsights)
+    .where(and(eq(aiInsights.type, "monthly"), eq(aiInsights.date, date)))
+    .orderBy(desc(aiInsights.createdAt))
+    .limit(1);
+  return insight ?? null;
+}
+
 export async function getSleepRecordCount() {
   const [result] = await db
     .select({ count: sql<number>`count(*)` })
