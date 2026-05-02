@@ -107,8 +107,7 @@ export async function getMonthlyInsight(year: number, month: number) {
 
 export async function getPreviousMonthlyInsights(
   year: number,
-  month: number,
-  count: number = 3
+  month: number
 ) {
   const targetDate = `${year}-${String(month).padStart(2, "0")}-01`;
   return db
@@ -117,8 +116,7 @@ export async function getPreviousMonthlyInsights(
     .where(
       and(eq(aiInsights.type, "monthly"), sql`${aiInsights.date} < ${targetDate}`)
     )
-    .orderBy(desc(aiInsights.date))
-    .limit(count);
+    .orderBy(aiInsights.date);
 }
 
 export async function getSleepRecordCount() {

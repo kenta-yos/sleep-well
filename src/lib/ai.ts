@@ -74,8 +74,8 @@ export async function generateMonthlySummary(
 ): Promise<string> {
   const prevContext =
     previousSummaries && previousSummaries.length > 0
-      ? `## 過去のサマリー（直近3ヶ月分）
-以下は過去に生成された月次サマリーです。今月の変化や成長、繰り返し現れるパターンに言及するための文脈として使ってください。
+      ? `## 過去のサマリー（全期間）
+以下は過去に生成された月次サマリーです（古い順）。今月の変化や成長、繰り返し現れるパターンに言及するための文脈として使ってください。直近の月ほど重要度が高いです。
 
 ${previousSummaries
   .map((s) => {

@@ -49,14 +49,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const previousSummaries = await getPreviousMonthlyInsights(year, month, 3);
+    const previousSummaries = await getPreviousMonthlyInsights(year, month);
 
     const content = await generateMonthlySummary(
       sleep,
       logs,
       year,
       month,
-      previousSummaries.reverse()
+      previousSummaries
     );
 
     const pad = (n: number) => String(n).padStart(2, "0");
