@@ -10,7 +10,7 @@ import {
 import { StatCard } from "@/components/ui/stat-card";
 import { DateNav } from "@/components/ui/date-nav";
 import { SleepSummaryCard } from "@/components/log/sleep-summary-card";
-import { generateNightlyTips } from "@/lib/rules";
+
 
 export default async function HomePage({
   searchParams,
@@ -69,7 +69,7 @@ export default async function HomePage({
         ).toFixed(1)
       : null;
 
-  const tips = generateNightlyTips(recentSleep, recentLogs);
+
 
   // Log status for selected date
   const hasMorningLog = dayLog?.freshnessScore != null;
@@ -102,22 +102,6 @@ export default async function HomePage({
           sub="/ 5"
         />
       </div>
-
-      {/* Tonight's tips (only show for today) */}
-      {date === today && tips.length > 0 && (
-        <div className="rounded-2xl border border-accent-yellow/30 bg-accent-yellow/5 p-4">
-          <h2 className="mb-2 text-sm font-medium text-accent-yellow">
-            今夜のおすすめ
-          </h2>
-          <ul className="space-y-1.5">
-            {tips.map((tip, i) => (
-              <li key={i} className="text-sm text-text">
-                {tip}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {/* Log status */}
       <div className="space-y-2">
