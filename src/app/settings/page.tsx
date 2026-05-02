@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { LogoutButton } from "./logout-button";
 
 export default function SettingsPage() {
   return (
@@ -14,18 +13,6 @@ export default function SettingsPage() {
           <span>CSVインポート</span>
           <ChevronRight />
         </Link>
-
-        <Link
-          href="/review"
-          className="flex min-h-[48px] items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm transition-colors hover:bg-surface-hover"
-        >
-          <span>月次サマリー</span>
-          <ChevronRight />
-        </Link>
-      </div>
-
-      <div className="pt-4">
-        <LogoutButton />
       </div>
 
       <p className="text-center text-xs text-text-muted">Sleep Well v0.1.0</p>
