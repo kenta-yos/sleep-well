@@ -135,11 +135,13 @@ export async function getMonthlyData(year: number, month: number) {
   const next = new Date(year, month, 1); // JS Date month is 0-indexed, so `month` (1-indexed) = next month
   const nextMonthFirst = `${next.getFullYear()}-${pad(next.getMonth() + 1)}-01`;
 
-  // dailyLogs: [monthStart, nextMonthFirst] inclusive
+  // dailyLogs: [monthStart, monthEnd] — only the target month
+  const monthEnd = new Date(year, month, 0); // last day of target month
+  const monthEndStr = `${monthEnd.getFullYear()}-${pad(monthEnd.getMonth() + 1)}-${pad(monthEnd.getDate())}`;
   const logs = await db
     .select()
     .from(dailyLogs)
-    .where(and(gte(dailyLogs.date, monthStart), lte(dailyLogs.date, nextMonthFirst)))
+    .where(and(gte(dailyLogs.date, monthStart), lte(dailyLogs.date, monthEndStr)))
     .orderBy(dailyLogs.date);
 
   // sleepRecords: [monthStart day2, nextMonthFirst] — sleep on D+1 pairs with night D
