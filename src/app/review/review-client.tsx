@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { ExportSection } from "@/components/export-section";
 
 function getMonthOptions(): { label: string; year: number; month: number }[] {
   const now = new Date();
@@ -188,6 +189,8 @@ export function ReviewClient({
           {error}
         </div>
       )}
+
+      <ExportSection />
 
       {content && (
         <div className="rounded-2xl border border-border bg-surface p-5">

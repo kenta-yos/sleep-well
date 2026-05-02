@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sleepRecords, dailyLogs } from "@/lib/db/schema";
-import { asc } from "drizzle-orm";
+import { asc, gte, lte, and } from "drizzle-orm";
 
 function toJST(iso: string | Date | null): string | null {
   if (!iso) return null;
@@ -32,15 +32,39 @@ const behaviorLabels: [string, string][] = [
   ["lateMeal", "遅い食事"],
 ];
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+
+  const sleepWhere =
+    from && to
+      ? and(gte(sleepRecords.date, from), lte(sleepRecords.date, to))
+      : from
+        ? gte(sleepRecords.date, from)
+        : to
+          ? lte(sleepRecords.date, to)
+          : undefined;
+
+  const logWhere =
+    from && to
+      ? and(gte(dailyLogs.date, from), lte(dailyLogs.date, to))
+      : from
+        ? gte(dailyLogs.date, from)
+        : to
+          ? lte(dailyLogs.date, to)
+          : undefined;
+
   const sleep = await db
     .select()
     .from(sleepRecords)
+    .where(sleepWhere)
     .orderBy(asc(sleepRecords.date));
 
   const logs = await db
     .select()
     .from(dailyLogs)
+    .where(logWhere)
     .orderBy(asc(dailyLogs.date));
 
   const logMap = new Map(logs.map((l) => [l.date, l]));
