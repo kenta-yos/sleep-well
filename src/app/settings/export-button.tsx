@@ -8,9 +8,29 @@ export function ExportButton() {
   async function handleExport() {
     setState("loading");
     try {
-      const res = await fetch("/api/export");
-      const text = await res.text();
-      await navigator.clipboard.writeText(text);
+      if (
+        typeof ClipboardItem !== "undefined" &&
+        navigator.clipboard?.write
+      ) {
+        const item = new ClipboardItem({
+          "text/plain": fetch("/api/export")
+            .then((res) => res.text())
+            .then((text) => new Blob([text], { type: "text/plain" })),
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        const res = await fetch("/api/export");
+        const text = await res.text();
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
       setState("copied");
       setTimeout(() => setState("idle"), 2000);
     } catch {

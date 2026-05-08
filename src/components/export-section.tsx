@@ -20,12 +20,44 @@ export function ExportSection() {
   const [to, setTo] = useState(getDefaultTo);
   const [state, setState] = useState<"idle" | "loading" | "copied">("idle");
 
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fallback for mobile Safari
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
   async function handleExport() {
     setState("loading");
     try {
-      const res = await fetch(`/api/export?from=${from}&to=${to}`);
-      const text = await res.text();
-      await navigator.clipboard.writeText(text);
+      // Safari: create ClipboardItem synchronously within user gesture
+      if (
+        typeof ClipboardItem !== "undefined" &&
+        navigator.clipboard?.write
+      ) {
+        const item = new ClipboardItem({
+          "text/plain": fetch(`/api/export?from=${from}&to=${to}`)
+            .then((res) => res.text())
+            .then((text) => new Blob([text], { type: "text/plain" })),
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        const res = await fetch(`/api/export?from=${from}&to=${to}`);
+        const text = await res.text();
+        await copyToClipboard(text);
+      }
       setState("copied");
       setTimeout(() => setState("idle"), 2000);
     } catch {
