@@ -10,10 +10,25 @@ export async function POST(req: NextRequest) {
   }
 
   const sessionId = crypto.randomBytes(32).toString("hex");
-  const hmac = crypto
-    .createHmac("sha256", process.env.AUTH_PASSWORD!)
-    .update(sessionId)
-    .digest("hex");
+
+  // Generate HMAC using Web Crypto API to match middleware verification
+  const encoder = new TextEncoder();
+  const key = await globalThis.crypto.subtle.importKey(
+    "raw",
+    encoder.encode(process.env.AUTH_PASSWORD!),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await globalThis.crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(sessionId)
+  );
+  const hmac = Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
   const token = `${sessionId}.${hmac}`;
 
   const cookieStore = await cookies();
@@ -21,7 +36,7 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 14, // 14 days
+    maxAge: 60 * 60 * 24 * 14,
     path: "/",
   });
 
