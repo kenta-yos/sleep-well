@@ -1,11 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+
+function verifyToken(token: string, password: string): boolean {
+  const dot = token.indexOf(".");
+  if (dot === -1) return false;
+  const sessionId = token.slice(0, dot);
+  const hmac = token.slice(dot + 1);
+  const expected = crypto
+    .createHmac("sha256", password)
+    .update(sessionId)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(hmac, "hex"),
+    Buffer.from(expected, "hex")
+  );
+}
+
+const securityHeaders: [string, string][] = [
+  ["X-Content-Type-Options", "nosniff"],
+  ["X-Frame-Options", "DENY"],
+  ["X-XSS-Protection", "1; mode=block"],
+  ["Referrer-Policy", "strict-origin-when-cross-origin"],
+  ["Permissions-Policy", "camera=(), microphone=(), geolocation=()"],
+  [
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload",
+  ],
+];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Allow login page and auth API
   if (pathname === "/login" || pathname.startsWith("/api/auth")) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    for (const [k, v] of securityHeaders) res.headers.set(k, v);
+    return res;
   }
 
   // Allow static assets
@@ -24,18 +54,17 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Validate token contains the correct password
   try {
-    const decoded = Buffer.from(token, "base64").toString();
-    const password = decoded.split(":").slice(1).join(":");
-    if (password !== process.env.AUTH_PASSWORD) {
+    if (!verifyToken(token, process.env.AUTH_PASSWORD!)) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
   } catch {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  for (const [k, v] of securityHeaders) res.headers.set(k, v);
+  return res;
 }
 
 export const config = {

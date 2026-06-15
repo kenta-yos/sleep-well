@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   const { password } = await req.json();
@@ -8,13 +9,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
 
-  const token = Buffer.from(`${Date.now()}:${password}`).toString("base64");
+  const sessionId = crypto.randomBytes(32).toString("hex");
+  const hmac = crypto
+    .createHmac("sha256", process.env.AUTH_PASSWORD!)
+    .update(sessionId)
+    .digest("hex");
+  const token = `${sessionId}.${hmac}`;
+
   const cookieStore = await cookies();
   cookieStore.set("auth_token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    maxAge: 60 * 60 * 24 * 14, // 14 days
     path: "/",
   });
 
