@@ -21,16 +21,16 @@ export default async function HomePage({
   const today = getEffectiveToday();
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
-  // 1ヶ月前の日付を計算（月末の溢れは前月末日に丸める）
-  const [cy, cm, cd] = date.split("-").map(Number);
-  const oneMonthAgoDate = new Date(cy, cm - 2, cd);
-  // 日が変わった = 溢れた（例: 3/31 → 2/31 → 3/3）ので前月末日に丸める
-  if (oneMonthAgoDate.getDate() !== cd) {
-    oneMonthAgoDate.setDate(0);
+  function monthsAgoStr(months: number): string {
+    const [cy, cm, cd] = date.split("-").map(Number);
+    const d = new Date(cy, cm - 1 - months, cd);
+    if (d.getDate() !== cd) d.setDate(0);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
-  const oneMonthAgoStr = `${oneMonthAgoDate.getFullYear()}-${String(oneMonthAgoDate.getMonth() + 1).padStart(2, "0")}-${String(oneMonthAgoDate.getDate()).padStart(2, "0")}`;
+  const oneMonthAgoStr = monthsAgoStr(1);
+  const threeMonthsAgoStr = monthsAgoStr(3);
 
-  const [daySleep, dayLog, recentSleep, recentLogs, totalCount, pastLog] =
+  const [daySleep, dayLog, recentSleep, recentLogs, totalCount, pastLog1m, pastLog3m] =
     await Promise.all([
       getSleepRecordByDate(date),
       getDailyLogByDate(date),
@@ -38,6 +38,7 @@ export default async function HomePage({
       getRecentDailyLogs(7),
       getSleepRecordCount(),
       getDailyLogByDate(oneMonthAgoStr),
+      getDailyLogByDate(threeMonthsAgoStr),
     ]);
 
   if (totalCount === 0) {
@@ -140,14 +141,24 @@ export default async function HomePage({
         </div>
       </div>
 
-      {/* 1ヶ月前の日記 */}
-      {pastLog?.note && (
+      {/* 過去の日記 */}
+      {pastLog1m?.note && (
         <div className="rounded-2xl border border-border bg-surface p-4">
           <h2 className="mb-2 text-xs font-medium text-text-muted">
             1ヶ月前の今日（{parseInt(oneMonthAgoStr.split("-")[1])}月{parseInt(oneMonthAgoStr.split("-")[2])}日）
           </h2>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
-            {pastLog.note}
+            {pastLog1m.note}
+          </p>
+        </div>
+      )}
+      {pastLog3m?.note && (
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <h2 className="mb-2 text-xs font-medium text-text-muted">
+            3ヶ月前の今日（{parseInt(threeMonthsAgoStr.split("-")[1])}月{parseInt(threeMonthsAgoStr.split("-")[2])}日）
+          </h2>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
+            {pastLog3m.note}
           </p>
         </div>
       )}
