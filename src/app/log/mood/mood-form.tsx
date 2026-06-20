@@ -17,9 +17,8 @@ import {
 import { saveMoodLog, clearMoodLog } from "@/actions/log-actions";
 import { Spinner } from "@/components/ui/spinner";
 
-function isSunday(date: string): boolean {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(y, m - 1, d).getDay() === 0;
+function isFirstOfMonth(date: string): boolean {
+  return date.endsWith("-01");
 }
 
 export function MoodForm({
@@ -46,7 +45,7 @@ export function MoodForm({
   const [saved, setSaved] = useState(!!initialPanas);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const showPss = isSunday(date);
+  const showPss = isFirstOfMonth(date);
 
   const panasComplete = IPANAS_ITEMS.every((item) => panasAnswers[item.id] != null);
   const pssComplete = PSS_ITEMS.every((item) => pssAnswers[item.id] != null);
@@ -194,7 +193,7 @@ export function MoodForm({
         <div className="space-y-3">
           <div className="rounded-xl bg-surface px-3 py-2">
             <h2 className="text-sm font-medium text-text-muted">
-              週間ストレスチェック（日曜のみ）
+              月間ストレスチェック（月初のみ）
             </h2>
             <p className="text-[11px] text-text-muted">
               {pssInstruction("この1ヶ月")}
