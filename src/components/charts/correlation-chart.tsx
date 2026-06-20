@@ -152,6 +152,8 @@ export function CorrelationChart({
       wakeTime: number;
       heartRate: number | null;
       stressTotal: number;
+      panasBalance: number | null;
+      pssScore: number | null;
     }[] = [];
 
     for (const sr of sleepRecords) {
@@ -168,6 +170,11 @@ export function CorrelationChart({
           ).reduce((a, b) => a + b, 0)
         : 0;
 
+      const panasBalance =
+        log.panasPositive != null && log.panasNegative != null
+          ? log.panasPositive - log.panasNegative
+          : null;
+
       pairs.push({
         freshness: log.freshnessScore,
         totalSleep: sr.totalSleepMinutes,
@@ -181,6 +188,8 @@ export function CorrelationChart({
           : 0,
         heartRate: sr.avgHeartRate ?? null,
         stressTotal,
+        panasBalance,
+        pssScore: log.pssScore ?? null,
       });
     }
 
@@ -230,6 +239,18 @@ export function CorrelationChart({
         moreLabel: "高いほどすっきり",
         lessLabel: "低いほどすっきり",
         values: pairs.map((p) => p.stressTotal),
+      },
+      {
+        question: "ポジ気分が高いほどすっきり？",
+        moreLabel: "ポジ優位ほどすっきり",
+        lessLabel: "ネガ優位ほどすっきり",
+        values: pairs.map((p) => p.panasBalance ?? NaN),
+      },
+      {
+        question: "知覚ストレス(PSS)が低いほどすっきり？",
+        moreLabel: "高いほどすっきり",
+        lessLabel: "低いほどすっきり",
+        values: pairs.map((p) => p.pssScore ?? NaN),
       },
     ];
 
