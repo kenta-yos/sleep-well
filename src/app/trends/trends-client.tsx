@@ -8,6 +8,8 @@ import { StressHeatmap } from "@/components/charts/stress-heatmap";
 import { SleepStatsSummary } from "@/components/charts/sleep-stats-summary";
 import { QualityFactors } from "@/components/charts/quality-factors";
 import { HeartRateChart } from "@/components/charts/heart-rate-chart";
+import { AffectChart } from "@/components/charts/affect-chart";
+import { PssTrendChart } from "@/components/charts/pss-trend-chart";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 /** Generate all YYYY-MM-DD strings from startDate to endDate inclusive */
@@ -96,6 +98,24 @@ export function TrendsClient({
     };
   });
 
+  const affectData = dateRange.map((date) => {
+    const l = logMap.get(date);
+    return {
+      date,
+      pa: l?.panasPositive ?? null,
+      na: l?.panasNegative ?? null,
+      freshness: l?.freshnessScore ?? undefined,
+    };
+  });
+
+  const pssData = dateRange.map((date) => {
+    const l = logMap.get(date);
+    return {
+      date,
+      pss: l?.pssScore ?? null,
+    };
+  });
+
   const stressData = dateRange.map((date) => {
     const l = logMap.get(date);
     return {
@@ -123,6 +143,8 @@ export function TrendsClient({
       <BedtimeChart data={bedtimeData} />
       <HeartRateChart data={heartRateData} />
       <StressHeatmap data={stressData} />
+      <AffectChart data={affectData} />
+      <PssTrendChart data={pssData} />
       <QualityFactors sleepRecords={filteredSleep} dailyLogs={filteredLogs} />
     </div>
   );
