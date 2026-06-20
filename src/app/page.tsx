@@ -86,6 +86,7 @@ export default async function HomePage({
   const hasMorningLog = dayLog?.freshnessScore != null;
   const stressSources = dayLog?.stressSources as Record<string, number> | null;
   const hasEveningLog = (stressSources && Object.values(stressSources).reduce((s, v) => s + v, 0) > 0) || dayLog?.alcohol || dayLog?.exercise || dayLog?.socializing || dayLog?.bathing || dayLog?.intenseFocus || dayLog?.reading || dayLog?.lateMeal;
+  const hasMoodLog = dayLog?.panasPositive != null;
   const dateQuery = `?date=${date}`;
 
   return (
@@ -117,7 +118,7 @@ export default async function HomePage({
       {/* Log status */}
       <div className="space-y-2">
         <h2 className="text-sm font-medium text-text-muted">この日のログ</h2>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Link
             href={`/log/morning${dateQuery}`}
             className="flex items-center justify-center rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-hover"
@@ -136,6 +137,16 @@ export default async function HomePage({
               className={`text-sm ${hasEveningLog ? "text-accent-green" : "text-text-muted"}`}
             >
               夜 {hasEveningLog ? "済み" : "未記入"}
+            </span>
+          </Link>
+          <Link
+            href={`/log/mood${dateQuery}`}
+            className="flex items-center justify-center rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-hover"
+          >
+            <span
+              className={`text-sm ${hasMoodLog ? "text-accent-green" : "text-text-muted"}`}
+            >
+              気分 {hasMoodLog ? "済み" : "未記入"}
             </span>
           </Link>
         </div>
