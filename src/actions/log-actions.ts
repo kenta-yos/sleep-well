@@ -72,6 +72,59 @@ export async function clearFreshnessScore(date: string) {
   return { ok: true };
 }
 
+export async function saveMoodLog(
+  date: string,
+  data: {
+    panasAnswers: Record<string, number>;
+    panasPositive: number;
+    panasNegative: number;
+    pssAnswers?: Record<string, number>;
+    pssScore?: number;
+    pssWindow?: string;
+  }
+) {
+  await db
+    .insert(dailyLogs)
+    .values({
+      date,
+      panasAnswers: data.panasAnswers,
+      panasPositive: data.panasPositive,
+      panasNegative: data.panasNegative,
+      pssAnswers: data.pssAnswers ?? null,
+      pssScore: data.pssScore ?? null,
+      pssWindow: data.pssWindow ?? null,
+    })
+    .onConflictDoUpdate({
+      target: dailyLogs.date,
+      set: {
+        panasAnswers: sql`excluded.panas_answers`,
+        panasPositive: sql`excluded.panas_positive`,
+        panasNegative: sql`excluded.panas_negative`,
+        pssAnswers: sql`excluded.pss_answers`,
+        pssScore: sql`excluded.pss_score`,
+        pssWindow: sql`excluded.pss_window`,
+        updatedAt: sql`now()`,
+      },
+    });
+  return { ok: true };
+}
+
+export async function clearMoodLog(date: string) {
+  await db
+    .update(dailyLogs)
+    .set({
+      panasAnswers: null,
+      panasPositive: null,
+      panasNegative: null,
+      pssAnswers: null,
+      pssScore: null,
+      pssWindow: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(dailyLogs.date, date));
+  return { ok: true };
+}
+
 export async function clearEveningLog(date: string) {
   await db
     .update(dailyLogs)
