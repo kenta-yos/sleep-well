@@ -191,6 +191,51 @@ async function LogSummaryView({
           <p className="text-sm text-text-muted">未記入</p>
         )}
       </section>
+
+      {/* Mood section */}
+      <section className="rounded-2xl border border-border bg-surface p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium">気分チェックイン</h2>
+          <Link
+            href={`/log/mood${dateQuery}`}
+            className="text-xs text-primary hover:underline"
+          >
+            {dailyLog?.panasPositive != null ? "編集する" : "記録する"} &rarr;
+          </Link>
+        </div>
+
+        {dailyLog?.panasPositive != null ? (
+          <div className="space-y-2">
+            <div className="flex gap-4 text-sm">
+              <span className="text-accent-green">
+                ポジ: {dailyLog.panasPositive}/25
+              </span>
+              <span className="text-accent-red">
+                ネガ: {dailyLog.panasNegative}/25
+              </span>
+              <span className="text-text-muted">
+                バランス:{" "}
+                {(() => {
+                  const b = (dailyLog.panasPositive ?? 0) - (dailyLog.panasNegative ?? 0);
+                  return `${b > 0 ? "+" : ""}${b}`;
+                })()}
+              </span>
+            </div>
+            {dailyLog.pssScore != null && (
+              <p className="text-sm text-text-muted">
+                PSS-10: {dailyLog.pssScore}/40・
+                {dailyLog.pssScore <= 13
+                  ? "低め"
+                  : dailyLog.pssScore <= 26
+                    ? "中程度"
+                    : "高め"}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-text-muted">未記入</p>
+        )}
+      </section>
     </div>
   );
 }
