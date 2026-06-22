@@ -55,6 +55,14 @@ function buildDataBlock(
     reading: l.reading,
     lateMeal: l.lateMeal,
     note: l.note,
+    ...(l.panasPositive != null
+      ? {
+          panasPositive: l.panasPositive,
+          panasNegative: l.panasNegative,
+          panasBalance: (l.panasPositive ?? 0) - (l.panasNegative ?? 0),
+        }
+      : {}),
+    ...(l.pssScore != null ? { pssScore: l.pssScore } : {}),
   }));
 
   return `## データ（すべて日本時間 JST）
@@ -98,7 +106,7 @@ ${previousSummaries
 
 ${prevContext}## 構成（この順番で書いてください）
 1. **睡眠の傾向** — 平均睡眠時間、深い睡眠・REMの割合、就寝/起床リズムの安定度、すっきり度の分布。週ごとの変化があれば触れる。日記から読み取れる睡眠に影響した出来事にも言及。${previousSummaries && previousSummaries.length > 0 ? "前月との比較も入れる。" : ""}
-2. **ストレスの傾向** — どのカテゴリ（仕事・恋愛・将来・友人等）が多かったか、月内での推移。日記を踏まえて、具体的に何がストレスだったのかを詳しく。${previousSummaries && previousSummaries.length > 0 ? "過去数ヶ月で繰り返されているストレスパターンがあれば指摘する。" : ""}
+2. **ストレスと気分の傾向** — ストレスカテゴリ（仕事・恋愛・将来・友人等）の推移と、PANAS（ポジ感情PA/ネガ感情NA、各5-25）のバランス推移を合わせて分析。日記を踏まえて、具体的に何がストレスや感情の変化を引き起こしたかを詳しく。PSS-10（知覚ストレス、0-40）のデータがあれば、全体的なストレス負荷の水準にも言及。${previousSummaries && previousSummaries.length > 0 ? "過去数ヶ月で繰り返されているパターンがあれば指摘する。" : ""}
 3. **${month}月のまとめ** — どんな1ヶ月だったかを日記ベースで詳しくまとめる。仕事、人間関係、プライベートの活動、心境の変化、印象的なエピソードなど、振り返りとして読み応えのある内容にする。${previousSummaries && previousSummaries.length > 0 ? "過去からの変化や成長にも触れる。" : ""}
 
 ${buildDataBlock(sleepRecords, dailyLogs)}
