@@ -169,7 +169,8 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
           const hasEvening = ev && (ev.stressSources != null || ev.alcohol || ev.exercise || ev.socializing || ev.bathing || ev.intenseFocus || ev.reading || ev.lateMeal);
           const hasMorning = mo?.freshnessScore != null;
           const hasSleep = sl?.totalSleepMinutes != null;
-          const hasAny = hasEvening || hasMorning || hasSleep;
+          const hasMood = ev?.panasPositive != null;
+          const hasAny = hasEvening || hasMorning || hasSleep || hasMood;
 
           return (
             <button
@@ -242,6 +243,19 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
                       <span className="text-text-muted">--</span>
                     )}
                   </span>
+
+                  {/* Mood balance */}
+                  {ev?.panasPositive != null && ev?.panasNegative != null && (
+                    <>
+                      <span className="text-text-muted">|</span>
+                      <span className={`text-xs font-medium ${
+                        ev.panasPositive - ev.panasNegative >= 0 ? "text-accent-green" : "text-accent-red"
+                      }`}>
+                        {ev.panasPositive - ev.panasNegative > 0 ? "+" : ""}
+                        {ev.panasPositive - ev.panasNegative}
+                      </span>
+                    </>
+                  )}
 
                 </div>
               )}
