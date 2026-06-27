@@ -108,8 +108,18 @@ export function DiarySearch() {
           value={query}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="日記を検索..."
-          className="w-full rounded-xl border border-border bg-surface pl-9 pr-4 py-2.5 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+          className="w-full rounded-xl border border-border bg-surface pl-9 pr-9 py-2.5 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
         />
+        {query && (
+          <button
+            onClick={() => { setQuery(""); setResults(null); }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-border/60 text-text-muted hover:bg-border"
+          >
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
         <svg
           className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
           fill="none"
