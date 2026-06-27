@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Spinner } from "@/components/ui/spinner";
+import { DiarySearch } from "@/components/log/diary-search";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 const freshnessEmojis: Record<number, string> = {
@@ -116,6 +117,8 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
 
   return (
     <div className="space-y-4">
+      <DiarySearch />
+
       {/* Month Selector */}
       <div className="flex items-center justify-between">
         <button
