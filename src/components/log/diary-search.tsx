@@ -20,7 +20,7 @@ export function DiarySearch() {
   function search(value: string, searchMode: "and" | "or", searchSort: "desc" | "asc") {
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    const keywords = value.trim().split(/\s+/).filter((k) => k.length > 0);
+    const keywords = value.trim().split(/[\s\u3000]+/).filter((k) => k.length > 0);
     if (keywords.length === 0 || value.trim().length < 2) {
       setResults(null);
       return;
@@ -58,7 +58,7 @@ export function DiarySearch() {
   }
 
   function highlight(text: string, q: string): React.ReactNode {
-    const keywords = q.trim().split(/\s+/).filter((k) => k.length > 0);
+    const keywords = q.trim().split(/[\s\u3000]+/).filter((k) => k.length > 0);
     if (keywords.length === 0) return text;
 
     // Find earliest match for context window

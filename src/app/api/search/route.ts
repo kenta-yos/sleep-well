@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [] });
   }
 
-  const keywords = q.split(/\s+/).filter((k) => k.length > 0);
+  const keywords = q.split(/[\s\u3000]+/).filter((k) => k.length > 0);
   if (keywords.length === 0) {
     return NextResponse.json({ results: [] });
   }
