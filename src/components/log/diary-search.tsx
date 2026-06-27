@@ -11,12 +11,13 @@ interface Result {
 export function DiarySearch() {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<"and" | "or">("and");
+  const [sort, setSort] = useState<"desc" | "asc">("desc");
   const [results, setResults] = useState<Result[] | null>(null);
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
-  function search(value: string, searchMode: "and" | "or") {
+  function search(value: string, searchMode: "and" | "or", searchSort: "desc" | "asc") {
     if (timerRef.current) clearTimeout(timerRef.current);
 
     const keywords = value.trim().split(/\s+/).filter((k) => k.length > 0);
@@ -29,7 +30,7 @@ export function DiarySearch() {
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/search?q=${encodeURIComponent(value.trim())}&mode=${searchMode}`
+          `/api/search?q=${encodeURIComponent(value.trim())}&mode=${searchMode}&sort=${searchSort}`
         );
         const data = await res.json();
         setResults(data.results);
@@ -43,12 +44,17 @@ export function DiarySearch() {
 
   function handleChange(value: string) {
     setQuery(value);
-    search(value, mode);
+    search(value, mode, sort);
   }
 
   function handleModeChange(newMode: "and" | "or") {
     setMode(newMode);
-    search(query, newMode);
+    search(query, newMode, sort);
+  }
+
+  function handleSortChange(newSort: "desc" | "asc") {
+    setSort(newSort);
+    search(query, mode, newSort);
   }
 
   function highlight(text: string, q: string): React.ReactNode {
@@ -156,9 +162,17 @@ export function DiarySearch() {
             </p>
           ) : (
             <>
-              <p className="text-[11px] text-text-muted">
-                {results.length}件{results.length === 30 ? "+" : ""}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] text-text-muted">
+                  {results.length}件{results.length === 30 ? "+" : ""}
+                </p>
+                <button
+                  onClick={() => handleSortChange(sort === "desc" ? "asc" : "desc")}
+                  className="text-[11px] text-text-muted hover:text-text"
+                >
+                  {sort === "desc" ? "新しい順 ↓" : "古い順 ↑"}
+                </button>
+              </div>
               {results.map((r) => (
                 <button
                   key={r.date}

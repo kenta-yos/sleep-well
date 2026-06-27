@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { dailyLogs } from "@/lib/db/schema";
-import { sql, desc, SQL } from "drizzle-orm";
+import { sql, desc, asc, SQL } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   const mode = req.nextUrl.searchParams.get("mode") === "or" ? "or" : "and";
+  const sort = req.nextUrl.searchParams.get("sort") === "asc" ? "asc" : "desc";
 
   if (!q || q.length < 2) {
     return NextResponse.json({ results: [] });
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
     })
     .from(dailyLogs)
     .where(sql`(${combined})`)
-    .orderBy(desc(dailyLogs.date))
+    .orderBy(sort === "asc" ? asc(dailyLogs.date) : desc(dailyLogs.date))
     .limit(30);
 
   return NextResponse.json({ results });
