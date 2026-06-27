@@ -10,16 +10,17 @@ interface Result {
 
 export function DiarySearch() {
   const [query, setQuery] = useState("");
+  const [mode, setMode] = useState<"and" | "or">("and");
   const [results, setResults] = useState<Result[] | null>(null);
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
-  function handleChange(value: string) {
-    setQuery(value);
+  function search(value: string, searchMode: "and" | "or") {
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    if (value.trim().length < 2) {
+    const keywords = value.trim().split(/\s+/).filter((k) => k.length > 0);
+    if (keywords.length === 0 || value.trim().length < 2) {
       setResults(null);
       return;
     }
@@ -28,7 +29,7 @@ export function DiarySearch() {
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/search?q=${encodeURIComponent(value.trim())}`
+          `/api/search?q=${encodeURIComponent(value.trim())}&mode=${searchMode}`
         );
         const data = await res.json();
         setResults(data.results);
@@ -40,29 +41,54 @@ export function DiarySearch() {
     }, 300);
   }
 
-  function highlight(text: string, q: string): React.ReactNode {
-    const lower = text.toLowerCase();
-    const qLower = q.toLowerCase();
-    const idx = lower.indexOf(qLower);
-    if (idx === -1) return text;
+  function handleChange(value: string) {
+    setQuery(value);
+    search(value, mode);
+  }
 
-    // Show context around match
-    const contextStart = Math.max(0, idx - 30);
-    const contextEnd = Math.min(text.length, idx + q.length + 60);
+  function handleModeChange(newMode: "and" | "or") {
+    setMode(newMode);
+    search(query, newMode);
+  }
+
+  function highlight(text: string, q: string): React.ReactNode {
+    const keywords = q.trim().split(/\s+/).filter((k) => k.length > 0);
+    if (keywords.length === 0) return text;
+
+    // Find earliest match for context window
+    const lower = text.toLowerCase();
+    let earliestIdx = text.length;
+    for (const kw of keywords) {
+      const idx = lower.indexOf(kw.toLowerCase());
+      if (idx !== -1 && idx < earliestIdx) earliestIdx = idx;
+    }
+    if (earliestIdx === text.length) return text;
+
+    const contextStart = Math.max(0, earliestIdx - 20);
+    const contextEnd = Math.min(text.length, contextStart + 100);
+    const snippet = text.slice(contextStart, contextEnd);
     const prefix = contextStart > 0 ? "..." : "";
     const suffix = contextEnd < text.length ? "..." : "";
-    const before = text.slice(contextStart, idx);
-    const match = text.slice(idx, idx + q.length);
-    const after = text.slice(idx + q.length, contextEnd);
+
+    // Build regex to highlight all keywords
+    const escaped = keywords.map((k) =>
+      k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    );
+    const regex = new RegExp(`(${escaped.join("|")})`, "gi");
+    const parts = snippet.split(regex);
 
     return (
       <>
         {prefix}
-        {before}
-        <mark className="bg-primary/30 text-text rounded-sm px-0.5">
-          {match}
-        </mark>
-        {after}
+        {parts.map((part, i) =>
+          regex.test(part) ? (
+            <mark key={i} className="bg-primary/30 text-text rounded-sm px-0.5">
+              {part}
+            </mark>
+          ) : (
+            <span key={i}>{part}</span>
+          )
+        )}
         {suffix}
       </>
     );
@@ -92,6 +118,31 @@ export function DiarySearch() {
           />
         </svg>
       </div>
+
+      {query.trim().includes(" ") && (
+        <div className="flex gap-1">
+          <button
+            onClick={() => handleModeChange("and")}
+            className={`rounded-lg px-2.5 py-1 text-xs transition-colors ${
+              mode === "and"
+                ? "bg-primary text-white"
+                : "border border-border bg-surface text-text-muted"
+            }`}
+          >
+            AND（すべて含む）
+          </button>
+          <button
+            onClick={() => handleModeChange("or")}
+            className={`rounded-lg px-2.5 py-1 text-xs transition-colors ${
+              mode === "or"
+                ? "bg-primary text-white"
+                : "border border-border bg-surface text-text-muted"
+            }`}
+          >
+            OR（いずれか含む）
+          </button>
+        </div>
+      )}
 
       {loading && (
         <p className="text-xs text-text-muted">検索中...</p>
