@@ -97,7 +97,7 @@ ${previousSummaries
       : "";
 
   const message = await client.messages.create({
-    model: "claude-sonnet-4-6-20250627",
+    model: "claude-sonnet-4-6",
     max_tokens: 3000,
     messages: [
       {
