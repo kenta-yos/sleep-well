@@ -156,7 +156,7 @@ export default async function HomePage({
       {pastLog1m?.note && (
         <div className="rounded-2xl border border-border bg-surface p-4">
           <h2 className="mb-2 text-xs font-medium text-text-muted">
-            1ヶ月前の今日（{parseInt(oneMonthAgoStr.split("-")[1])}月{parseInt(oneMonthAgoStr.split("-")[2])}日）
+            1ヶ月前の今日（{parseInt(oneMonthAgoStr.split("-")[1])}月{parseInt(oneMonthAgoStr.split("-")[2])}日・{new Date(oneMonthAgoStr + "T00:00:00+09:00").toLocaleDateString("ja-JP", { weekday: "short", timeZone: "Asia/Tokyo" })}）
           </h2>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
             {pastLog1m.note}
@@ -166,7 +166,7 @@ export default async function HomePage({
       {pastLog3m?.note && (
         <div className="rounded-2xl border border-border bg-surface p-4">
           <h2 className="mb-2 text-xs font-medium text-text-muted">
-            3ヶ月前の今日（{parseInt(threeMonthsAgoStr.split("-")[1])}月{parseInt(threeMonthsAgoStr.split("-")[2])}日）
+            3ヶ月前の今日（{parseInt(threeMonthsAgoStr.split("-")[1])}月{parseInt(threeMonthsAgoStr.split("-")[2])}日・{new Date(threeMonthsAgoStr + "T00:00:00+09:00").toLocaleDateString("ja-JP", { weekday: "short", timeZone: "Asia/Tokyo" })}）
           </h2>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
             {pastLog3m.note}
