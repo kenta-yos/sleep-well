@@ -4,15 +4,22 @@ import { useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 
+function getDow(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00+09:00");
+  return d.toLocaleDateString("ja-JP", { weekday: "short", timeZone: "Asia/Tokyo" });
+}
+
 function formatDisplayDate(dateStr: string, today: string): string {
-  if (dateStr === today) return "今日";
+  const dow = getDow(dateStr);
+
+  if (dateStr === today) return `今日（${dow}）`;
 
   const d = new Date(dateStr + "T00:00:00+09:00");
   const t = new Date(today + "T00:00:00+09:00");
   const diff = Math.round(
     (t.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
   );
-  if (diff === 1) return "昨日";
+  if (diff === 1) return `昨日（${dow}）`;
 
   return d.toLocaleDateString("ja-JP", {
     month: "numeric",
