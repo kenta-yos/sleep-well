@@ -210,30 +210,32 @@ export function MorningForm({
         />
       </section>
 
+      {/* Clear link */}
+      <div className="flex justify-center">
+        <button
+          type="button"
+          onClick={handleClear}
+          className="text-xs text-text-muted underline"
+        >
+          朝ログを取り消す
+        </button>
+      </div>
+
       {/* Spacer for sticky buttons */}
       <div className="h-20" />
 
       {/* Sticky Save / Cancel buttons */}
-      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 px-4">
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-md px-4 py-3">
         <div className="mx-auto max-w-lg space-y-2">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleClear}
-              className="flex-1 rounded-xl border border-border bg-surface py-3 font-medium text-text shadow-lg transition-colors hover:bg-surface-hover"
-            >
-              取り消す
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white shadow-lg transition-colors hover:bg-primary-hover disabled:opacity-70"
-            >
-              {saving && <Spinner className="text-white" />}
-              {saving ? "保存中..." : "保存する"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white shadow-lg transition-colors hover:bg-primary-hover disabled:opacity-70"
+          >
+            {saving && <Spinner className="text-white" />}
+            {saving ? "保存中..." : "保存する"}
+          </button>
           {saved && !saving && (
             <p className="text-center text-sm text-accent-green">保存しました</p>
           )}
