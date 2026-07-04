@@ -126,6 +126,10 @@ export function EveningForm({
             update("note", e.target.value);
             e.target.style.height = "auto";
             e.target.style.height = e.target.scrollHeight + "px";
+            // Scroll so cursor stays visible above the sticky bar
+            requestAnimationFrame(() => {
+              e.target.scrollIntoView({ block: "center", behavior: "smooth" });
+            });
           }}
           placeholder="自由記入..."
           rows={3}
