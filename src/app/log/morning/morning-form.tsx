@@ -225,7 +225,7 @@ export function MorningForm({
       <div className="h-20" />
 
       {/* Sticky Save / Cancel buttons */}
-      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-md px-4 py-3">
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 border-t border-border bg-background px-4 py-3">
         <div className="mx-auto max-w-lg space-y-2">
           <button
             type="button"
