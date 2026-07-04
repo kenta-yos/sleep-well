@@ -122,52 +122,63 @@ export function EveningForm({
         <h2 className="text-sm font-medium text-text-muted">メモ</h2>
         <textarea
           value={data.note}
-          onChange={(e) => update("note", e.target.value)}
+          onChange={(e) => {
+            update("note", e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = e.target.scrollHeight + "px";
+          }}
           placeholder="自由記入..."
           rows={3}
-          className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+          className="w-full resize-none rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
         />
       </div>
 
-      {/* Save Button */}
-      <button
-        onClick={handleSave}
-        disabled={isPending}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-70"
-      >
-        {isPending && <Spinner className="text-white" />}
-        {isPending ? "保存中..." : "保存する"}
-      </button>
+      {/* Spacer for sticky button */}
+      <div className="h-20" />
 
-      <div className="flex items-center justify-center gap-3">
-        {saved && !isPending && (
-          <p className="text-sm text-accent-green">保存しました</p>
-        )}
-        {initialData && !isPending && (
+      {/* Sticky Save Button */}
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 px-4">
+        <div className="mx-auto max-w-lg space-y-2">
           <button
-            onClick={() => {
-              startTransition(async () => {
-                await clearEveningLog(date);
-                setData({
-                  stressSources: {},
-                  alcohol: false,
-                  exercise: false,
-                  socializing: false,
-                  bathing: false,
-                  intenseFocus: false,
-                  reading: false,
-                  lateMeal: false,
-                  note: "",
-                });
-                setSaved(false);
-                router.refresh();
-              });
-            }}
-            className="text-xs text-text-muted underline"
+            onClick={handleSave}
+            disabled={isPending}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white shadow-lg transition-colors hover:bg-primary-hover disabled:opacity-70"
           >
-            夜ログを取り消す
+            {isPending && <Spinner className="text-white" />}
+            {isPending ? "保存中..." : "保存する"}
           </button>
-        )}
+
+          <div className="flex items-center justify-center gap-3">
+            {saved && !isPending && (
+              <p className="text-sm text-accent-green">保存しました</p>
+            )}
+            {initialData && !isPending && (
+              <button
+                onClick={() => {
+                  startTransition(async () => {
+                    await clearEveningLog(date);
+                    setData({
+                      stressSources: {},
+                      alcohol: false,
+                      exercise: false,
+                      socializing: false,
+                      bathing: false,
+                      intenseFocus: false,
+                      reading: false,
+                      lateMeal: false,
+                      note: "",
+                    });
+                    setSaved(false);
+                    router.refresh();
+                  });
+                }}
+                className="text-xs text-text-muted underline"
+              >
+                夜ログを取り消す
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

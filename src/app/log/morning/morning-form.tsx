@@ -210,29 +210,35 @@ export function MorningForm({
         />
       </section>
 
-      {/* Save / Cancel buttons */}
-      <div className="flex gap-3 pb-4">
-        <button
-          type="button"
-          onClick={handleClear}
-          className="flex-1 rounded-xl border border-border bg-surface py-3 font-medium text-text transition-colors hover:bg-surface-hover"
-        >
-          取り消す
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-70"
-        >
-          {saving && <Spinner className="text-white" />}
-          {saving ? "保存中..." : "保存する"}
-        </button>
-      </div>
+      {/* Spacer for sticky buttons */}
+      <div className="h-20" />
 
-      {saved && !saving && (
-        <p className="text-center text-sm text-accent-green">保存しました</p>
-      )}
+      {/* Sticky Save / Cancel buttons */}
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 px-4">
+        <div className="mx-auto max-w-lg space-y-2">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleClear}
+              className="flex-1 rounded-xl border border-border bg-surface py-3 font-medium text-text shadow-lg transition-colors hover:bg-surface-hover"
+            >
+              取り消す
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white shadow-lg transition-colors hover:bg-primary-hover disabled:opacity-70"
+            >
+              {saving && <Spinner className="text-white" />}
+              {saving ? "保存中..." : "保存する"}
+            </button>
+          </div>
+          {saved && !saving && (
+            <p className="text-center text-sm text-accent-green">保存しました</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

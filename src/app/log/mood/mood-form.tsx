@@ -229,22 +229,28 @@ export function MoodForm({
         </div>
       )}
 
-      {/* Save */}
-      <button
-        onClick={handleSave}
-        disabled={isPending || !panasComplete || (showPss && !pssComplete)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
-      >
-        {isPending && <Spinner className="text-white" />}
-        {isPending ? "保存中..." : "保存する"}
-      </button>
+      {/* Spacer for sticky button */}
+      <div className="h-24" />
 
-      {!panasComplete && (
-        <p className="text-center text-xs text-text-muted">
-          すべての項目に回答してください
-          （{Object.keys(panasAnswers).length}/{IPANAS_ITEMS.length}）
-        </p>
-      )}
+      {/* Sticky Save */}
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 px-4">
+        <div className="mx-auto max-w-lg space-y-2">
+          <button
+            onClick={handleSave}
+            disabled={isPending || !panasComplete || (showPss && !pssComplete)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white shadow-lg transition-colors hover:bg-primary-hover disabled:opacity-50"
+          >
+            {isPending && <Spinner className="text-white" />}
+            {isPending ? "保存中..." : "保存する"}
+          </button>
+
+          {!panasComplete && (
+            <p className="text-center text-xs text-text-muted">
+              {Object.keys(panasAnswers).length}/{IPANAS_ITEMS.length} 回答済み
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
