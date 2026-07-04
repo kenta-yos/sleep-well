@@ -230,7 +230,7 @@ export function MoodForm({
       )}
 
       {/* Spacer for sticky button */}
-      <div className="h-24" />
+      <div className="h-32" />
 
       {/* Sticky Save */}
       <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 border-t border-border bg-background px-4 py-3">

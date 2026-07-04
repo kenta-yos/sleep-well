@@ -222,7 +222,7 @@ export function MorningForm({
       </div>
 
       {/* Spacer for sticky buttons */}
-      <div className="h-20" />
+      <div className="h-32" />
 
       {/* Sticky Save / Cancel buttons */}
       <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-0 right-0 z-40 border-t border-border bg-background px-4 py-3">
