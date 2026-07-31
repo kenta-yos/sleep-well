@@ -69,11 +69,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ content });
   } catch (e) {
     console.error("Monthly review generation failed:", e);
-    const message =
-      e instanceof Error ? e.message : "不明なエラーが発生しました";
+    const isTimeout =
+      e instanceof Error &&
+      (e.message.includes("timeout") || e.message.includes("TIMEOUT") || e.name === "AbortError");
+    const message = isTimeout
+      ? "タイムアウトしました。もう一度お試しください"
+      : e instanceof Error
+        ? e.message
+        : "不明なエラーが発生しました";
     return NextResponse.json(
       { error: `生成に失敗しました: ${message}` },
-      { status: 500 }
+      { status: isTimeout ? 504 : 500 }
     );
   }
 }

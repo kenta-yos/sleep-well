@@ -3,6 +3,7 @@ import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
+  timeout: 55_000, // Stay within Vercel's 60s maxDuration
 });
 
 function toJST(iso: string | Date | null): string | null {
