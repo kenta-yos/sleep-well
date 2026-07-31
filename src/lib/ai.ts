@@ -74,13 +74,13 @@ ${JSON.stringify(sleepSummary, null, 2)}
 ${JSON.stringify(logSummary, null, 2)}`;
 }
 
-export async function generateMonthlySummary(
+export function generateMonthlySummary(
   sleepRecords: SleepRecord[],
   dailyLogs: DailyLog[],
   year: number,
   month: number,
   previousSummaries?: { date: string; content: string }[]
-): Promise<string> {
+): string {
   const prevContext =
     previousSummaries && previousSummaries.length > 0
       ? `## 過去のサマリー（全期間）
@@ -97,13 +97,7 @@ ${previousSummaries
 `
       : "";
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 3000,
-    messages: [
-      {
-        role: "user",
-        content: `以下の${year}年${month}月の1ヶ月分の睡眠データと生活習慣ログを分析し、日本語で月次サマリーを書いてください。
+  const prompt = `以下の${year}年${month}月の1ヶ月分の睡眠データと生活習慣ログを分析し、日本語で月次サマリーを書いてください。
 
 ${prevContext}## 構成（この順番で書いてください）
 1. **睡眠の傾向** — 平均睡眠時間、深い睡眠・REMの割合、就寝/起床リズムの安定度、すっきり度の分布。週ごとの変化があれば触れる。日記から読み取れる睡眠に影響した出来事にも言及。${previousSummaries && previousSummaries.length > 0 ? "前月との比較も入れる。" : ""}
@@ -113,11 +107,15 @@ ${prevContext}## 構成（この順番で書いてください）
 ${buildDataBlock(sleepRecords, dailyLogs)}
 
 ${TONE_INSTRUCTION}
-- 800-1200字程度で、まとめパートは特に厚めに書く`,
-      },
-    ],
-  });
+- 800-1200字程度で、まとめパートは特に厚めに書く`;
 
-  const textBlock = message.content.find((b) => b.type === "text");
-  return textBlock?.text ?? "サマリーを生成できませんでした";
+  return prompt;
+}
+
+export function createSummaryStream(prompt: string) {
+  return client.messages.stream({
+    model: "claude-sonnet-4-6",
+    max_tokens: 3000,
+    messages: [{ role: "user", content: prompt }],
+  });
 }

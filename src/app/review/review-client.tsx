@@ -118,6 +118,10 @@ export function ReviewClient({
   async function handleGenerate() {
     setError(null);
     setIsPending(true);
+    setContent("");
+    setDate(
+      `${selectedMonth.year}-${String(selectedMonth.month).padStart(2, "0")}-01`
+    );
     try {
       const res = await fetch("/api/review", {
         method: "POST",
@@ -127,14 +131,28 @@ export function ReviewClient({
           month: selectedMonth.month,
         }),
       });
-      const data = await res.json();
+
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
         setError(data.error ?? "エラーが発生しました");
-      } else {
-        setContent(data.content);
-        setDate(
-          `${selectedMonth.year}-${String(selectedMonth.month).padStart(2, "0")}-01`
-        );
+        setContent(null);
+        return;
+      }
+
+      // Stream response
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setError("ストリームを読み取れませんでした");
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let result = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        result += decoder.decode(value, { stream: true });
+        setContent(result);
       }
     } catch {
       setError("通信エラーが発生しました");

@@ -6,7 +6,7 @@ import {
   getMonthlyInsight,
   getPreviousMonthlyInsights,
 } from "@/lib/db/queries";
-import { generateMonthlySummary } from "@/lib/ai";
+import { generateMonthlySummary, createSummaryStream } from "@/lib/ai";
 
 export const maxDuration = 60;
 
@@ -50,36 +50,55 @@ export async function POST(req: NextRequest) {
     }
 
     const previousSummaries = await getPreviousMonthlyInsights(year, month);
+    const prompt = generateMonthlySummary(sleep, logs, year, month, previousSummaries);
 
-    const content = await generateMonthlySummary(
-      sleep,
-      logs,
-      year,
-      month,
-      previousSummaries
-    );
+    const stream = createSummaryStream(prompt);
+    let fullContent = "";
 
-    const pad = (n: number) => String(n).padStart(2, "0");
-    await db.insert(aiInsights).values({
-      date: `${year}-${pad(month)}-01`,
-      type: "monthly",
-      content,
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of stream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              const text = event.delta.text;
+              fullContent += text;
+              controller.enqueue(encoder.encode(text));
+            }
+          }
+
+          // Save to DB after streaming completes
+          const pad = (n: number) => String(n).padStart(2, "0");
+          await db.insert(aiInsights).values({
+            date: `${year}-${pad(month)}-01`,
+            type: "monthly",
+            content: fullContent,
+          });
+
+          controller.close();
+        } catch (e) {
+          console.error("Stream error:", e);
+          controller.error(e);
+        }
+      },
     });
 
-    return NextResponse.json({ content });
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+      },
+    });
   } catch (e) {
     console.error("Monthly review generation failed:", e);
-    const isTimeout =
-      e instanceof Error &&
-      (e.message.includes("timeout") || e.message.includes("TIMEOUT") || e.name === "AbortError");
-    const message = isTimeout
-      ? "タイムアウトしました。もう一度お試しください"
-      : e instanceof Error
-        ? e.message
-        : "不明なエラーが発生しました";
+    const message =
+      e instanceof Error ? e.message : "不明なエラーが発生しました";
     return NextResponse.json(
       { error: `生成に失敗しました: ${message}` },
-      { status: isTimeout ? 504 : 500 }
+      { status: 500 }
     );
   }
 }
