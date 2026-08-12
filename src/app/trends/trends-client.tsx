@@ -49,7 +49,7 @@ export function TrendsClient({
   dailyLogs: DailyLog[];
 }) {
   const [tab, setTab] = useState<Tab>("recent");
-  const [days, setDays] = useState(30);
+  const days = 30;
 
   const sleepMap = useMemo(() => {
     const map = new Map<string, SleepRecord>();
@@ -163,23 +163,6 @@ export function TrendsClient({
 
       {tab === "recent" ? (
         <div className="space-y-6">
-          {/* Period selector */}
-          <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
-            {[7, 30].map((d) => (
-              <button
-                key={d}
-                onClick={() => setDays(d)}
-                className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  days === d
-                    ? "bg-primary text-white"
-                    : "text-text-muted hover:text-text"
-                }`}
-              >
-                {d}日
-              </button>
-            ))}
-          </div>
-
           <SleepStatsSummary records={filteredSleep} />
           <SleepDurationChart data={durationData} />
           <BedtimeChart data={bedtimeData} />
