@@ -163,21 +163,66 @@ export function ReviewClient({
 
   return (
     <div className="space-y-4">
-      <select
-        value={`${selectedMonth.year}-${selectedMonth.month}`}
-        onChange={(e) => {
-          const [y, m] = e.target.value.split("-").map(Number);
-          const opt = monthOptions.find((o) => o.year === y && o.month === m);
-          if (opt) setSelectedMonth(opt);
-        }}
-        className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm"
-      >
-        {monthOptions.map((o) => (
-          <option key={`${o.year}-${o.month}`} value={`${o.year}-${o.month}`}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => {
+            const idx = monthOptions.findIndex(
+              (o) => o.year === selectedMonth.year && o.month === selectedMonth.month
+            );
+            if (idx < monthOptions.length - 1) setSelectedMonth(monthOptions[idx + 1]);
+          }}
+          disabled={
+            isPending ||
+            monthOptions.findIndex(
+              (o) => o.year === selectedMonth.year && o.month === selectedMonth.month
+            ) >= monthOptions.length - 1
+          }
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-text-muted transition-colors hover:bg-surface disabled:opacity-30"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div className="relative text-center">
+          <p className="text-lg font-bold">{selectedMonth.label}</p>
+          <select
+            value={`${selectedMonth.year}-${selectedMonth.month}`}
+            onChange={(e) => {
+              const [y, m] = e.target.value.split("-").map(Number);
+              const opt = monthOptions.find((o) => o.year === y && o.month === m);
+              if (opt) setSelectedMonth(opt);
+            }}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          >
+            {monthOptions.map((o) => (
+              <option key={`${o.year}-${o.month}`} value={`${o.year}-${o.month}`}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          onClick={() => {
+            const idx = monthOptions.findIndex(
+              (o) => o.year === selectedMonth.year && o.month === selectedMonth.month
+            );
+            if (idx > 0) setSelectedMonth(monthOptions[idx - 1]);
+          }}
+          disabled={
+            isPending ||
+            monthOptions.findIndex(
+              (o) => o.year === selectedMonth.year && o.month === selectedMonth.month
+            ) <= 0
+          }
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-text-muted transition-colors hover:bg-surface disabled:opacity-30"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
 
       <button
         onClick={handleGenerate}
