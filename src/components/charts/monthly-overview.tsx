@@ -381,16 +381,17 @@ function MonthlyStressHeatmap({
   if (allVals.length === 0) return null;
 
   const maxVal = Math.max(...allVals);
-  const p33 = maxVal / 3;
-  const p66 = (maxVal * 2) / 3;
+  const p25 = maxVal * 0.25;
+  const p50 = maxVal * 0.5;
+  const p75 = maxVal * 0.75;
 
   function cellStyle(val: number | null): React.CSSProperties {
-    const threshold = maxVal * 0.1;
-    if (val == null || val < threshold) {
+    if (val == null || val === 0) {
       return { background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" };
     }
-    if (val <= p33) return { background: "oklch(0.60 0.13 230)" };
-    if (val <= p66) return { background: "oklch(0.70 0.17 60)" };
+    if (val <= p25) return { background: "oklch(0.55 0.08 230 / 0.5)" };
+    if (val <= p50) return { background: "oklch(0.60 0.13 230)" };
+    if (val <= p75) return { background: "oklch(0.70 0.17 60)" };
     return { background: "oklch(0.60 0.22 25)" };
   }
 
@@ -435,15 +436,15 @@ function MonthlyStressHeatmap({
       </div>
 
       <div className="flex items-center gap-2 text-[10px] text-text-muted">
-        <span>低</span>
+        <span>なし</span>
         <div className="flex gap-[2px]">
           <div className="h-3 w-3 rounded-[3px]" style={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" }} />
+          <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.55 0.08 230 / 0.5)" }} />
           <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.60 0.13 230)" }} />
           <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.70 0.17 60)" }} />
           <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.60 0.22 25)" }} />
         </div>
         <span>高</span>
-        <span className="ml-2 text-[9px]">（自分の範囲内での相対値）</span>
       </div>
     </div>
   );
