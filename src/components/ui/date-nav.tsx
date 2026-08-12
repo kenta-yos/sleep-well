@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -50,8 +50,10 @@ export function DateNav({
   const searchParams = useSearchParams();
   const isToday = date === today;
   const [isPending, startTransition] = useTransition();
+  const pickerRef = useRef<HTMLInputElement>(null);
 
   function navigate(newDate: string) {
+    if (newDate > today) return;
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString());
       if (newDate === today) {
@@ -76,7 +78,11 @@ export function DateNav({
         </svg>
       </button>
 
-      <div className="text-center">
+      <button
+        onClick={() => pickerRef.current?.showPicker()}
+        disabled={isPending}
+        className="relative text-center"
+      >
         {isPending ? (
           <Spinner className="text-primary" />
         ) : (
@@ -85,7 +91,18 @@ export function DateNav({
             <p className="text-xs text-text-muted">{date}</p>
           </>
         )}
-      </div>
+        <input
+          ref={pickerRef}
+          type="date"
+          value={date}
+          max={today}
+          onChange={(e) => {
+            if (e.target.value) navigate(e.target.value);
+          }}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          tabIndex={-1}
+        />
+      </button>
 
       <button
         onClick={() => navigate(shiftDate(date, 1))}
