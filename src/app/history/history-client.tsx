@@ -131,12 +131,26 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
           </svg>
         </button>
 
-        <div className="text-center">
+        <div className="relative text-center">
           {isPending ? (
             <Spinner className="text-primary" />
           ) : (
             <p className="text-lg font-bold">{year}年{month}月</p>
           )}
+          <input
+            type="month"
+            value={`${year}-${pad(month)}`}
+            max={`${todayY}-${pad(todayM)}`}
+            onChange={(e) => {
+              if (!e.target.value) return;
+              const [ny, nm] = e.target.value.split("-").map(Number);
+              startTransition(() => {
+                router.push(`/log?month=${ny}-${pad(nm)}`);
+              });
+            }}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            tabIndex={-1}
+          />
         </div>
 
         <button
