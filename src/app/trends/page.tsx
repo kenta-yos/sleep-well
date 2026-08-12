@@ -1,11 +1,10 @@
 import { TrendsClient } from "./trends-client";
-import { getCombinedData } from "@/lib/db/queries";
+import { getAllCombinedData } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrendsPage() {
-  // Fetch max range, client will filter
-  const { sleep, logs } = await getCombinedData(90);
+  const { sleep, logs } = await getAllCombinedData();
 
   return (
     <div className="space-y-6">

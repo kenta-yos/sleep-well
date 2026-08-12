@@ -73,6 +73,20 @@ export async function getCombinedData(days: number) {
   return { sleep, logs };
 }
 
+export async function getAllCombinedData() {
+  const sleep = await db
+    .select()
+    .from(sleepRecords)
+    .orderBy(sleepRecords.date);
+
+  const logs = await db
+    .select()
+    .from(dailyLogs)
+    .orderBy(dailyLogs.date);
+
+  return { sleep, logs };
+}
+
 // AI Insights
 export async function getLatestWeeklyInsight() {
   const [insight] = await db

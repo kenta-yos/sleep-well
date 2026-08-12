@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { PeriodSelector } from "@/components/ui/period-selector";
 import { SleepDurationChart } from "@/components/charts/sleep-duration-chart";
 import { BedtimeChart } from "@/components/charts/bedtime-chart";
 import { StressHeatmap } from "@/components/charts/stress-heatmap";
@@ -10,9 +9,9 @@ import { QualityFactors } from "@/components/charts/quality-factors";
 import { HeartRateChart } from "@/components/charts/heart-rate-chart";
 import { AffectChart } from "@/components/charts/affect-chart";
 import { PssTrendChart } from "@/components/charts/pss-trend-chart";
+import { MonthlyOverview } from "@/components/charts/monthly-overview";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
-/** Generate all YYYY-MM-DD strings from startDate to endDate inclusive */
 function generateDateRange(startDate: string, endDate: string): string[] {
   const dates: string[] = [];
   const [sy, sm, sd] = startDate.split("-").map(Number);
@@ -41,6 +40,8 @@ function getDaysAgo(days: number): string {
   return jst.toISOString().split("T")[0];
 }
 
+type Tab = "recent" | "longterm";
+
 export function TrendsClient({
   sleepRecords,
   dailyLogs,
@@ -48,6 +49,7 @@ export function TrendsClient({
   sleepRecords: SleepRecord[];
   dailyLogs: DailyLog[];
 }) {
+  const [tab, setTab] = useState<Tab>("recent");
   const [days, setDays] = useState(30);
 
   const sleepMap = useMemo(() => {
@@ -135,17 +137,71 @@ export function TrendsClient({
   }, [dailyLogs, days]);
 
   return (
-    <div className="space-y-6">
-      <PeriodSelector value={days} onChange={setDays} />
+    <div className="space-y-4">
+      {/* Tab selector */}
+      <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
+        <button
+          onClick={() => setTab("recent")}
+          className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            tab === "recent"
+              ? "bg-primary text-white"
+              : "text-text-muted hover:text-text"
+          }`}
+        >
+          最近
+        </button>
+        <button
+          onClick={() => setTab("longterm")}
+          className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            tab === "longterm"
+              ? "bg-primary text-white"
+              : "text-text-muted hover:text-text"
+          }`}
+        >
+          長期
+        </button>
+      </div>
 
-      <SleepStatsSummary records={filteredSleep} />
-      <SleepDurationChart data={durationData} />
-      <BedtimeChart data={bedtimeData} />
-      <HeartRateChart data={heartRateData} />
-      <StressHeatmap data={stressData} />
-      <AffectChart data={affectData} />
-      <PssTrendChart data={pssData} />
-      <QualityFactors sleepRecords={filteredSleep} dailyLogs={filteredLogs} />
+      {tab === "recent" ? (
+        <div className="space-y-6">
+          {/* Period selector */}
+          <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
+            {[7, 30].map((d) => (
+              <button
+                key={d}
+                onClick={() => setDays(d)}
+                className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  days === d
+                    ? "bg-primary text-white"
+                    : "text-text-muted hover:text-text"
+                }`}
+              >
+                {d}日
+              </button>
+            ))}
+          </div>
+
+          <SleepStatsSummary records={filteredSleep} />
+          <SleepDurationChart data={durationData} />
+          <BedtimeChart data={bedtimeData} />
+          <HeartRateChart data={heartRateData} />
+          <StressHeatmap data={stressData} />
+          <AffectChart data={affectData} />
+          <PssTrendChart data={pssData} />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <SleepStatsSummary records={sleepRecords} />
+          <MonthlyOverview
+            sleepRecords={sleepRecords}
+            dailyLogs={dailyLogs}
+          />
+          <QualityFactors
+            sleepRecords={sleepRecords}
+            dailyLogs={dailyLogs}
+          />
+        </div>
+      )}
     </div>
   );
 }
