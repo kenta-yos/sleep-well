@@ -362,15 +362,6 @@ function MiniChart({
   );
 }
 
-function stressCellStyle(val: number | null): React.CSSProperties {
-  if (val == null || val < 0.15) {
-    return { background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" };
-  }
-  if (val < 0.8) return { background: "oklch(0.60 0.13 230)" };
-  if (val < 1.5) return { background: "oklch(0.70 0.17 60)" };
-  return { background: "oklch(0.60 0.22 25)" };
-}
-
 function MonthlyStressHeatmap({
   data,
 }: {
@@ -378,9 +369,33 @@ function MonthlyStressHeatmap({
 }) {
   if (data.length === 0) return null;
 
+  // Collect all non-null values to compute relative scale
+  const allVals: number[] = [];
+  for (const month of data) {
+    for (const cat of STRESS_CATEGORIES) {
+      const v = month.catAvgs[cat.id];
+      if (v != null && v > 0) allVals.push(v);
+    }
+  }
+
+  if (allVals.length === 0) return null;
+
+  const maxVal = Math.max(...allVals);
+  const p33 = maxVal / 3;
+  const p66 = (maxVal * 2) / 3;
+
+  function cellStyle(val: number | null): React.CSSProperties {
+    if (val == null || val < 0.01) {
+      return { background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" };
+    }
+    if (val <= p33) return { background: "oklch(0.60 0.13 230)" };
+    if (val <= p66) return { background: "oklch(0.70 0.17 60)" };
+    return { background: "oklch(0.60 0.22 25)" };
+  }
+
   return (
     <div className="space-y-2">
-      <p className="text-xs text-text-muted">ストレス（カテゴリ × 月平均）</p>
+      <p className="text-xs text-text-muted">ストレス（カテゴリ × 月平均・相対スケール）</p>
       <div
         className="grid gap-[3px]"
         style={{
@@ -398,8 +413,8 @@ function MonthlyStressHeatmap({
                 <div
                   key={`${cat.id}-${month.key}`}
                   className="aspect-square rounded-[3px]"
-                  style={stressCellStyle(val)}
-                  title={`${month.label} ${cat.label}: ${val != null ? val.toFixed(1) : "—"}`}
+                  style={cellStyle(val)}
+                  title={`${month.label} ${cat.label}: ${val != null ? val.toFixed(2) : "—"}`}
                 />
               );
             })}
@@ -419,14 +434,15 @@ function MonthlyStressHeatmap({
       </div>
 
       <div className="flex items-center gap-2 text-[10px] text-text-muted">
-        <span>なし</span>
+        <span>低</span>
         <div className="flex gap-[2px]">
-          <div className="h-3 w-3 rounded-[3px]" style={stressCellStyle(0)} />
-          <div className="h-3 w-3 rounded-[3px]" style={stressCellStyle(0.5)} />
-          <div className="h-3 w-3 rounded-[3px]" style={stressCellStyle(1.2)} />
-          <div className="h-3 w-3 rounded-[3px]" style={stressCellStyle(2)} />
+          <div className="h-3 w-3 rounded-[3px]" style={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" }} />
+          <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.60 0.13 230)" }} />
+          <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.70 0.17 60)" }} />
+          <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.60 0.22 25)" }} />
         </div>
         <span>高</span>
+        <span className="ml-2 text-[9px]">（自分の範囲内での相対値）</span>
       </div>
     </div>
   );
