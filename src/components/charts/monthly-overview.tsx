@@ -385,7 +385,8 @@ function MonthlyStressHeatmap({
   const p66 = (maxVal * 2) / 3;
 
   function cellStyle(val: number | null): React.CSSProperties {
-    if (val == null || val < 0.01) {
+    const threshold = maxVal * 0.1;
+    if (val == null || val < threshold) {
       return { background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" };
     }
     if (val <= p33) return { background: "oklch(0.60 0.13 230)" };
