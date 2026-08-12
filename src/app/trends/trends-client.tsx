@@ -7,7 +7,6 @@ import { StressHeatmap } from "@/components/charts/stress-heatmap";
 import { SleepStatsSummary } from "@/components/charts/sleep-stats-summary";
 import { HeartRateChart } from "@/components/charts/heart-rate-chart";
 import { AffectChart } from "@/components/charts/affect-chart";
-import { PssTrendChart } from "@/components/charts/pss-trend-chart";
 import { MonthlyOverview } from "@/components/charts/monthly-overview";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
@@ -109,14 +108,6 @@ export function TrendsClient({
     };
   });
 
-  const pssData = dateRange.map((date) => {
-    const l = logMap.get(date);
-    return {
-      date,
-      pss: l?.pssScore ?? null,
-    };
-  });
-
   const stressData = dateRange.map((date) => {
     const l = logMap.get(date);
     return {
@@ -169,7 +160,6 @@ export function TrendsClient({
           <HeartRateChart data={heartRateData} />
           <StressHeatmap data={stressData} />
           <AffectChart data={affectData} />
-          <PssTrendChart data={pssData} />
         </div>
       ) : (
         <div className="space-y-6">
