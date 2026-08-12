@@ -10,6 +10,16 @@ import {
 } from "recharts";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
+const STRESS_CATEGORIES = [
+  { id: "work", label: "仕事" },
+  { id: "friends", label: "友人関係" },
+  { id: "romance", label: "恋愛" },
+  { id: "health", label: "体調" },
+  { id: "money", label: "金銭" },
+  { id: "future", label: "将来" },
+  { id: "other", label: "その他" },
+] as const;
+
 function median(nums: number[]): number | null {
   if (nums.length === 0) return null;
   const sorted = [...nums].sort((a, b) => a - b);
@@ -157,6 +167,20 @@ export function MonthlyOverview({
     balance: m.paBalance ? +m.paBalance.toFixed(1) : null,
   }));
 
+  // Stress by category per month
+  const stressByCat = sortedMonths.map((key) => {
+    const logs = logsByMonth.get(key) ?? [];
+    const withStress = logs.filter((l) => l.stressSources);
+    const catAvgs: Record<string, number | null> = {};
+    for (const cat of STRESS_CATEGORIES) {
+      const vals = withStress
+        .map((l) => (l.stressSources as Record<string, number>)?.[cat.id] ?? 0);
+      catAvgs[cat.id] = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    }
+    const m = parseInt(key.split("-")[1]);
+    return { label: `${m}月`, key, catAvgs };
+  });
+
   return (
     <div className="space-y-6">
       {/* Trend charts */}
@@ -192,6 +216,7 @@ export function MonthlyOverview({
           color="oklch(0.65 0.18 300)"
           unit=""
         />
+        <MonthlyStressHeatmap data={stressByCat} />
         {chartData.some((d) => d.balance != null) && (
           <MiniChart
             title="PA-NAバランス（平均）"
@@ -332,6 +357,76 @@ function MiniChart({
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function stressCellStyle(val: number | null): React.CSSProperties {
+  if (val == null || val < 0.15) {
+    return { background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" };
+  }
+  if (val < 0.8) return { background: "oklch(0.60 0.13 230)" };
+  if (val < 1.5) return { background: "oklch(0.70 0.17 60)" };
+  return { background: "oklch(0.60 0.22 25)" };
+}
+
+function MonthlyStressHeatmap({
+  data,
+}: {
+  data: { label: string; key: string; catAvgs: Record<string, number | null> }[];
+}) {
+  if (data.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-text-muted">ストレス（カテゴリ × 月平均）</p>
+      <div
+        className="grid gap-[3px]"
+        style={{
+          gridTemplateColumns: `max-content repeat(${data.length}, minmax(0, 1fr))`,
+        }}
+      >
+        {STRESS_CATEGORIES.map((cat) => (
+          <div key={cat.id} className="contents">
+            <div className="pr-2 text-[10px] text-text-muted flex items-center whitespace-nowrap">
+              {cat.label}
+            </div>
+            {data.map((month) => {
+              const val = month.catAvgs[cat.id];
+              return (
+                <div
+                  key={`${cat.id}-${month.key}`}
+                  className="aspect-square rounded-[3px]"
+                  style={stressCellStyle(val)}
+                  title={`${month.label} ${cat.label}: ${val != null ? val.toFixed(1) : "—"}`}
+                />
+              );
+            })}
+          </div>
+        ))}
+
+        {/* Month labels */}
+        <div />
+        {data.map((month) => (
+          <div
+            key={`label-${month.key}`}
+            className="text-center text-[9px] text-text-muted pt-1"
+          >
+            {month.label}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 text-[10px] text-text-muted">
+        <span>なし</span>
+        <div className="flex gap-[2px]">
+          <div className="h-3 w-3 rounded-[3px]" style={stressCellStyle(0)} />
+          <div className="h-3 w-3 rounded-[3px]" style={stressCellStyle(0.5)} />
+          <div className="h-3 w-3 rounded-[3px]" style={stressCellStyle(1.2)} />
+          <div className="h-3 w-3 rounded-[3px]" style={stressCellStyle(2)} />
+        </div>
+        <span>高</span>
       </div>
     </div>
   );
