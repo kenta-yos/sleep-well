@@ -159,8 +159,53 @@ export function MonthlyOverview({
 
   return (
     <div className="space-y-6">
+      {/* Trend charts */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium">月次トレンド</h3>
+
+        <MiniChart
+          title="睡眠時間（中央値）"
+          data={chartData}
+          dataKey="sleep"
+          color="oklch(0.5 0.2 270)"
+          unit="h"
+        />
+        <MiniChart
+          title="平均心拍数（中央値）"
+          data={chartData}
+          dataKey="hr"
+          color="oklch(0.65 0.2 25)"
+          unit="bpm"
+        />
+        <MiniChart
+          title="すっきり度（中央値）"
+          data={chartData}
+          dataKey="freshness"
+          color="oklch(0.72 0.17 155)"
+          unit="/5"
+          domain={[1, 5]}
+        />
+        <MiniChart
+          title="ストレス合計（平均）"
+          data={chartData}
+          dataKey="stress"
+          color="oklch(0.65 0.18 300)"
+          unit=""
+        />
+        {chartData.some((d) => d.balance != null) && (
+          <MiniChart
+            title="PA-NAバランス（平均）"
+            data={chartData}
+            dataKey="balance"
+            color="oklch(0.72 0.17 155)"
+            unit=""
+          />
+        )}
+      </div>
+
       {/* Monthly cards */}
       <div className="space-y-3">
+        <h3 className="text-sm font-medium">月別サマリー</h3>
         {[...months].reverse().map((m, i, arr) => {
           const prev = arr[i + 1] ?? null;
           return (
@@ -207,50 +252,6 @@ export function MonthlyOverview({
             </div>
           );
         })}
-      </div>
-
-      {/* Trend charts */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium">月次トレンド</h3>
-
-        <MiniChart
-          title="睡眠時間（中央値）"
-          data={chartData}
-          dataKey="sleep"
-          color="oklch(0.5 0.2 270)"
-          unit="h"
-        />
-        <MiniChart
-          title="平均心拍数（中央値）"
-          data={chartData}
-          dataKey="hr"
-          color="oklch(0.65 0.2 25)"
-          unit="bpm"
-        />
-        <MiniChart
-          title="すっきり度（中央値）"
-          data={chartData}
-          dataKey="freshness"
-          color="oklch(0.72 0.17 155)"
-          unit="/5"
-          domain={[1, 5]}
-        />
-        <MiniChart
-          title="ストレス合計（平均）"
-          data={chartData}
-          dataKey="stress"
-          color="oklch(0.65 0.18 300)"
-          unit=""
-        />
-        {chartData.some((d) => d.balance != null) && (
-          <MiniChart
-            title="PA-NAバランス（平均）"
-            data={chartData}
-            dataKey="balance"
-            color="oklch(0.72 0.17 155)"
-            unit=""
-          />
-        )}
       </div>
     </div>
   );
