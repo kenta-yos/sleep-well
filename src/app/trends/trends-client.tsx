@@ -5,7 +5,6 @@ import { SleepDurationChart } from "@/components/charts/sleep-duration-chart";
 import { BedtimeChart } from "@/components/charts/bedtime-chart";
 import { StressHeatmap } from "@/components/charts/stress-heatmap";
 import { SleepStatsSummary } from "@/components/charts/sleep-stats-summary";
-import { QualityFactors } from "@/components/charts/quality-factors";
 import { HeartRateChart } from "@/components/charts/heart-rate-chart";
 import { AffectChart } from "@/components/charts/affect-chart";
 import { PssTrendChart } from "@/components/charts/pss-trend-chart";
@@ -193,10 +192,6 @@ export function TrendsClient({
         <div className="space-y-6">
           <SleepStatsSummary records={sleepRecords} />
           <MonthlyOverview
-            sleepRecords={sleepRecords}
-            dailyLogs={dailyLogs}
-          />
-          <QualityFactors
             sleepRecords={sleepRecords}
             dailyLogs={dailyLogs}
           />
