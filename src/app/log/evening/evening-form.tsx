@@ -123,72 +123,51 @@ export function EveningForm({
         <textarea
           value={data.note}
           onChange={(e) => update("note", e.target.value)}
-          onFocus={(e) => {
-            // Set scroll padding so browser keeps cursor above sticky bar
-            document.documentElement.style.scrollPaddingBottom = "200px";
-            e.target.style.height = "auto";
-            e.target.style.height = e.target.scrollHeight + "px";
-          }}
-          onBlur={() => {
-            document.documentElement.style.scrollPaddingBottom = "";
-          }}
-          onInput={(e) => {
-            const el = e.target as HTMLTextAreaElement;
-            el.style.height = "auto";
-            el.style.height = el.scrollHeight + "px";
-          }}
           placeholder="自由記入..."
-          rows={3}
+          rows={8}
           className="w-full resize-none rounded-xl border border-border bg-surface px-4 py-3 text-sm leading-relaxed text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
         />
       </div>
 
-      {/* Spacer for sticky button */}
-      <div className="h-40" />
+      {/* Save Button */}
+      <button
+        onClick={handleSave}
+        disabled={isPending}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-70"
+      >
+        {isPending && <Spinner className="text-white" />}
+        {isPending ? "保存中..." : "保存する"}
+      </button>
 
-      {/* Sticky Save Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+68px)]">
-        <div className="mx-auto max-w-lg space-y-2">
+      <div className="flex items-center justify-center gap-3">
+        {saved && !isPending && (
+          <p className="text-sm text-accent-green">保存しました</p>
+        )}
+        {initialData && !isPending && (
           <button
-            onClick={handleSave}
-            disabled={isPending}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white shadow-lg transition-colors hover:bg-primary-hover disabled:opacity-70"
+            onClick={() => {
+              startTransition(async () => {
+                await clearEveningLog(date);
+                setData({
+                  stressSources: {},
+                  alcohol: false,
+                  exercise: false,
+                  socializing: false,
+                  bathing: false,
+                  intenseFocus: false,
+                  reading: false,
+                  lateMeal: false,
+                  note: "",
+                });
+                setSaved(false);
+                router.refresh();
+              });
+            }}
+            className="text-xs text-text-muted underline"
           >
-            {isPending && <Spinner className="text-white" />}
-            {isPending ? "保存中..." : "保存する"}
+            夜ログを取り消す
           </button>
-
-          <div className="flex items-center justify-center gap-3">
-            {saved && !isPending && (
-              <p className="text-sm text-accent-green">保存しました</p>
-            )}
-            {initialData && !isPending && (
-              <button
-                onClick={() => {
-                  startTransition(async () => {
-                    await clearEveningLog(date);
-                    setData({
-                      stressSources: {},
-                      alcohol: false,
-                      exercise: false,
-                      socializing: false,
-                      bathing: false,
-                      intenseFocus: false,
-                      reading: false,
-                      lateMeal: false,
-                      note: "",
-                    });
-                    setSaved(false);
-                    router.refresh();
-                  });
-                }}
-                className="text-xs text-text-muted underline"
-              >
-                夜ログを取り消す
-              </button>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

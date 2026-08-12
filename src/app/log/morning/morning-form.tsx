@@ -210,7 +210,20 @@ export function MorningForm({
         />
       </section>
 
-      {/* Clear link */}
+      {/* Save Button */}
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-70"
+      >
+        {saving && <Spinner className="text-white" />}
+        {saving ? "保存中..." : "保存する"}
+      </button>
+      {saved && !saving && (
+        <p className="text-center text-sm text-accent-green">保存しました</p>
+      )}
+
       <div className="flex justify-center">
         <button
           type="button"
@@ -219,27 +232,6 @@ export function MorningForm({
         >
           朝ログを取り消す
         </button>
-      </div>
-
-      {/* Spacer for sticky buttons */}
-      <div className="h-40" />
-
-      {/* Sticky Save / Cancel buttons */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+68px)]">
-        <div className="mx-auto max-w-lg space-y-2">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white shadow-lg transition-colors hover:bg-primary-hover disabled:opacity-70"
-          >
-            {saving && <Spinner className="text-white" />}
-            {saving ? "保存中..." : "保存する"}
-          </button>
-          {saved && !saving && (
-            <p className="text-center text-sm text-accent-green">保存しました</p>
-          )}
-        </div>
       </div>
     </div>
   );
