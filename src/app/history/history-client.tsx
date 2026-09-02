@@ -186,7 +186,7 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
           const hasEvening = ev && (ev.stressSources != null || ev.alcohol || ev.exercise || ev.socializing || ev.bathing || ev.intenseFocus || ev.reading || ev.lateMeal);
           const hasMorning = mo?.freshnessScore != null;
           const hasSleep = sl?.totalSleepMinutes != null;
-          const hasMood = ev?.panasPositive != null;
+          const hasMood = ev?.tdmsVitality != null || ev?.panasPositive != null;
           const hasAny = hasEvening || hasMorning || hasSleep || hasMood;
 
           return (
@@ -261,18 +261,35 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
                     )}
                   </span>
 
-                  {/* Mood balance */}
-                  {ev?.panasPositive != null && ev?.panasNegative != null && (
-                    <>
-                      <span className="text-text-muted">|</span>
-                      <span className={`text-xs font-medium ${
-                        ev.panasPositive - ev.panasNegative >= 0 ? "text-accent-green" : "text-accent-red"
-                      }`}>
-                        {ev.panasPositive - ev.panasNegative > 0 ? "+" : ""}
-                        {ev.panasPositive - ev.panasNegative}
-                      </span>
-                    </>
-                  )}
+                  {/* Mood: TDMS 快適度, or the PANAS balance for pre-2026-09 days.
+                      Both happen to span -20..+20 but they are different
+                      constructs, so the label says which one is shown. */}
+                  {(() => {
+                    const tdms =
+                      ev?.tdmsVitality != null && ev?.tdmsStability != null
+                        ? ev.tdmsVitality + ev.tdmsStability
+                        : null;
+                    const panas =
+                      ev?.panasPositive != null && ev?.panasNegative != null
+                        ? ev.panasPositive - ev.panasNegative
+                        : null;
+                    const value = tdms ?? panas;
+                    if (value == null) return null;
+                    return (
+                      <>
+                        <span className="text-text-muted">|</span>
+                        <span
+                          title={tdms != null ? "快適度（TDMS）" : "感情バランス（旧尺度）"}
+                          className={`text-xs font-medium ${
+                            value >= 0 ? "text-accent-green" : "text-accent-red"
+                          } ${tdms == null ? "opacity-60" : ""}`}
+                        >
+                          {value > 0 ? "+" : ""}
+                          {value}
+                        </span>
+                      </>
+                    );
+                  })()}
 
                 </div>
               )}

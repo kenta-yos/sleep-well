@@ -139,9 +139,19 @@ export function MonthlyOverview({
     const stressTotals = logs
       .filter((l) => l.stressSources)
       .map((l) => Object.values(l.stressSources as Record<string, number>).reduce((a, b) => a + b, 0));
+    // TDMS 快適度（2026-09〜）を優先し、それ以前は PANAS バランスで埋める。
+    // 別の尺度なので月をまたいだ比較は慎重に。
     const balances = logs
-      .filter((l) => l.panasPositive != null && l.panasNegative != null)
-      .map((l) => (l.panasPositive ?? 0) - (l.panasNegative ?? 0));
+      .map((l) => {
+        if (l.tdmsVitality != null && l.tdmsStability != null) {
+          return l.tdmsVitality + l.tdmsStability;
+        }
+        if (l.panasPositive != null && l.panasNegative != null) {
+          return l.panasPositive - l.panasNegative;
+        }
+        return null;
+      })
+      .filter((v): v is number => v != null);
 
     return {
       label: `${m}月`,

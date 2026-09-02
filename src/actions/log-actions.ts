@@ -75,34 +75,25 @@ export async function clearFreshnessScore(date: string) {
 export async function saveMoodLog(
   date: string,
   data: {
-    panasAnswers: Record<string, number>;
-    panasPositive: number;
-    panasNegative: number;
-    pssAnswers?: Record<string, number>;
-    pssScore?: number;
-    pssWindow?: string;
+    tdmsAnswers: Record<string, number>;
+    tdmsVitality: number;
+    tdmsStability: number;
   }
 ) {
   await db
     .insert(dailyLogs)
     .values({
       date,
-      panasAnswers: data.panasAnswers,
-      panasPositive: data.panasPositive,
-      panasNegative: data.panasNegative,
-      pssAnswers: data.pssAnswers ?? null,
-      pssScore: data.pssScore ?? null,
-      pssWindow: data.pssWindow ?? null,
+      tdmsAnswers: data.tdmsAnswers,
+      tdmsVitality: data.tdmsVitality,
+      tdmsStability: data.tdmsStability,
     })
     .onConflictDoUpdate({
       target: dailyLogs.date,
       set: {
-        panasAnswers: sql`excluded.panas_answers`,
-        panasPositive: sql`excluded.panas_positive`,
-        panasNegative: sql`excluded.panas_negative`,
-        pssAnswers: sql`excluded.pss_answers`,
-        pssScore: sql`excluded.pss_score`,
-        pssWindow: sql`excluded.pss_window`,
+        tdmsAnswers: sql`excluded.tdms_answers`,
+        tdmsVitality: sql`excluded.tdms_vitality`,
+        tdmsStability: sql`excluded.tdms_stability`,
         updatedAt: sql`now()`,
       },
     });
@@ -113,6 +104,9 @@ export async function clearMoodLog(date: string) {
   await db
     .update(dailyLogs)
     .set({
+      tdmsAnswers: null,
+      tdmsVitality: null,
+      tdmsStability: null,
       panasAnswers: null,
       panasPositive: null,
       panasNegative: null,

@@ -200,25 +200,24 @@ async function LogSummaryView({
             href={`/log/mood${dateQuery}`}
             className="text-xs text-primary hover:underline"
           >
-            {dailyLog?.panasPositive != null ? "編集する" : "記録する"} &rarr;
+            {dailyLog?.tdmsVitality != null ? "編集する" : "記録する"} &rarr;
           </Link>
         </div>
 
-        {dailyLog?.panasPositive != null ? (
+        {dailyLog?.tdmsVitality != null && dailyLog?.tdmsStability != null ? (
           <div className="space-y-2">
-            <div className="flex gap-4 text-sm">
-              <span className="text-accent-green">
-                ポジ: {dailyLog.panasPositive}/25
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              <span className="text-text">
+                活性度: {signed(dailyLog.tdmsVitality)}/10
               </span>
-              <span className="text-accent-red">
-                ネガ: {dailyLog.panasNegative}/25
+              <span className="text-text">
+                安定度: {signed(dailyLog.tdmsStability)}/10
               </span>
               <span className="text-text-muted">
-                バランス:{" "}
-                {(() => {
-                  const b = (dailyLog.panasPositive ?? 0) - (dailyLog.panasNegative ?? 0);
-                  return `${b > 0 ? "+" : ""}${b}`;
-                })()}
+                快適度: {signed(dailyLog.tdmsVitality + dailyLog.tdmsStability)}
+              </span>
+              <span className="text-text-muted">
+                覚醒度: {signed(dailyLog.tdmsVitality - dailyLog.tdmsStability)}
               </span>
             </div>
             {dailyLog.pssScore != null && (
@@ -232,10 +231,26 @@ async function LogSummaryView({
               </p>
             )}
           </div>
+        ) : dailyLog?.panasPositive != null ? (
+          <div className="space-y-1">
+            <p className="text-xs text-text-muted">旧尺度（PANAS）で記録</p>
+            <div className="flex gap-4 text-sm">
+              <span className="text-accent-green">
+                ポジ: {dailyLog.panasPositive}/25
+              </span>
+              <span className="text-accent-red">
+                ネガ: {dailyLog.panasNegative}/25
+              </span>
+            </div>
+          </div>
         ) : (
           <p className="text-sm text-text-muted">未記入</p>
         )}
       </section>
     </div>
   );
+}
+
+function signed(n: number): string {
+  return `${n > 0 ? "+" : ""}${n}`;
 }

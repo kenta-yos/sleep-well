@@ -86,7 +86,9 @@ export default async function HomePage({
   const hasMorningLog = dayLog?.freshnessScore != null;
   const stressSources = dayLog?.stressSources as Record<string, number> | null;
   const hasEveningLog = (stressSources && Object.values(stressSources).reduce((s, v) => s + v, 0) > 0) || dayLog?.alcohol || dayLog?.exercise || dayLog?.socializing || dayLog?.bathing || dayLog?.intenseFocus || dayLog?.reading || dayLog?.lateMeal;
-  const hasMoodLog = dayLog?.panasPositive != null;
+  // Days before 2026-09 were recorded with PANAS instead of TDMS.
+  const hasMoodLog =
+    dayLog?.tdmsVitality != null || dayLog?.panasPositive != null;
   const dateQuery = `?date=${date}`;
 
   return (

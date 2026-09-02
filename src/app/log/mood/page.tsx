@@ -50,15 +50,14 @@ export default async function MoodPage({
       <MoodForm
         key={date}
         date={date}
-        initialPanas={
-          dailyLog?.panasAnswers as Record<string, number> | null ?? null
+        initialTdms={
+          (dailyLog?.tdmsAnswers as Record<string, number> | null) ?? null
         }
-        initialPss={
-          dailyLog?.pssAnswers as Record<string, number> | null ?? null
-        }
-        savedPositive={dailyLog?.panasPositive ?? null}
-        savedNegative={dailyLog?.panasNegative ?? null}
+        savedVitality={dailyLog?.tdmsVitality ?? null}
+        savedStability={dailyLog?.tdmsStability ?? null}
         savedPssScore={dailyLog?.pssScore ?? null}
+        legacyPanasPositive={dailyLog?.panasPositive ?? null}
+        legacyPanasNegative={dailyLog?.panasNegative ?? null}
       />
     </div>
   );

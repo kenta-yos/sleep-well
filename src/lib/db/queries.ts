@@ -47,7 +47,7 @@ export async function getRecentDailyLogs(days: number) {
 
 // Combined data for trends
 // Trends page: only the columns the charts actually read. Selecting * shipped
-// stage_items, panas_answers and every diary note to the browser (~373KB).
+// stage_items, the raw answer blobs and every diary note to the browser (~373KB).
 export async function getTrendsData() {
   const sleep = await db
     .select({
@@ -69,9 +69,11 @@ export async function getTrendsData() {
     .select({
       date: dailyLogs.date,
       freshnessScore: dailyLogs.freshnessScore,
+      stressSources: dailyLogs.stressSources,
+      tdmsVitality: dailyLogs.tdmsVitality,
+      tdmsStability: dailyLogs.tdmsStability,
       panasPositive: dailyLogs.panasPositive,
       panasNegative: dailyLogs.panasNegative,
-      stressSources: dailyLogs.stressSources,
     })
     .from(dailyLogs)
     .orderBy(dailyLogs.date);

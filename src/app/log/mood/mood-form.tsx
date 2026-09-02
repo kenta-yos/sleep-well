@@ -3,126 +3,108 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  IPANAS_ITEMS,
-  IPANAS_INSTRUCTION,
-  PANAS_ANCHORS,
-  PSS_ITEMS,
-  PSS_ANCHORS,
-  pssInstruction,
-  scorePanas,
-  scorePss,
-  type PanasAnswers,
-  type PssAnswers,
+  TDMS_ITEMS,
+  TDMS_INSTRUCTION,
+  TDMS_ANCHORS,
+  TDMS_RANGE,
+  scoreTdms,
+  pssBandLabel,
+  type TdmsAnswers,
 } from "@/lib/assessments/scales";
 import { saveMoodLog, clearMoodLog } from "@/actions/log-actions";
 import { Spinner } from "@/components/ui/spinner";
-
-function isFirstOfMonth(date: string): boolean {
-  return date.endsWith("-01");
-}
+import { MoodGrid } from "@/components/log/mood-grid";
 
 export function MoodForm({
   date,
-  initialPanas,
-  initialPss,
-  savedPositive,
-  savedNegative,
+  initialTdms,
+  savedVitality,
+  savedStability,
   savedPssScore,
+  legacyPanasPositive,
+  legacyPanasNegative,
 }: {
   date: string;
-  initialPanas: Record<string, number> | null;
-  initialPss: Record<string, number> | null;
-  savedPositive: number | null;
-  savedNegative: number | null;
+  initialTdms: Record<string, number> | null;
+  savedVitality: number | null;
+  savedStability: number | null;
+  /** PSS-10 input was retired in 2026-09; past scores still render. */
   savedPssScore: number | null;
+  /** Days logged before 2026-09 hold I-PANAS-SF instead. Read-only. */
+  legacyPanasPositive: number | null;
+  legacyPanasNegative: number | null;
 }) {
-  const [panasAnswers, setPanasAnswers] = useState<Partial<PanasAnswers>>(
-    (initialPanas as Partial<PanasAnswers>) ?? {}
+  const [tdmsAnswers, setTdmsAnswers] = useState<Partial<TdmsAnswers>>(
+    (initialTdms as Partial<TdmsAnswers>) ?? {}
   );
-  const [pssAnswers, setPssAnswers] = useState<Partial<PssAnswers>>(
-    (initialPss as Partial<PssAnswers>) ?? {}
-  );
-  const [saved, setSaved] = useState(!!initialPanas);
+  const [saved, setSaved] = useState(!!initialTdms);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const showPss = isFirstOfMonth(date);
 
-  const panasComplete = IPANAS_ITEMS.every((item) => panasAnswers[item.id] != null);
-  const pssComplete = PSS_ITEMS.every((item) => pssAnswers[item.id] != null);
+  const tdmsComplete = TDMS_ITEMS.every((item) => tdmsAnswers[item.id] != null);
 
   function handleSave() {
-    if (!panasComplete) return;
-    const panas = scorePanas(panasAnswers as PanasAnswers);
-    const pss = showPss && pssComplete ? scorePss(pssAnswers as PssAnswers) : null;
+    if (!tdmsComplete) return;
+    const tdms = scoreTdms(tdmsAnswers as TdmsAnswers);
 
     startTransition(async () => {
       await saveMoodLog(date, {
-        panasAnswers: panasAnswers as Record<string, number>,
-        panasPositive: panas.positive,
-        panasNegative: panas.negative,
-        ...(pss
-          ? {
-              pssAnswers: pssAnswers as Record<string, number>,
-              pssScore: pss.score,
-              pssWindow: "この1ヶ月",
-            }
-          : {}),
+        tdmsAnswers: tdmsAnswers as Record<string, number>,
+        tdmsVitality: tdms.vitality,
+        tdmsStability: tdms.stability,
       });
       setSaved(true);
       router.refresh();
     });
   }
 
-  // Show results when saved
-  if (saved && savedPositive != null) {
-    const balance = savedPositive - (savedNegative ?? 0);
+  if (saved && savedVitality != null && savedStability != null) {
+    const pleasure = savedVitality + savedStability;
+    const arousal = savedVitality - savedStability;
+
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl border border-border bg-surface p-5 space-y-3">
-          <h2 className="text-sm font-medium">今日の気分スコア</h2>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <p className="text-[10px] text-text-muted">ポジティブ</p>
-              <p className="text-lg font-semibold text-accent-green">
-                {savedPositive}
-              </p>
-              <p className="text-[10px] text-text-muted">/ 25</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-text-muted">ネガティブ</p>
-              <p className="text-lg font-semibold text-accent-red">
-                {savedNegative}
-              </p>
-              <p className="text-[10px] text-text-muted">/ 25</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-text-muted">バランス</p>
-              <p
-                className={`text-lg font-semibold ${balance >= 0 ? "text-accent-green" : "text-accent-red"}`}
-              >
-                {balance > 0 ? "+" : ""}
-                {balance}
-              </p>
-            </div>
+        <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+          <h2 className="text-sm font-medium">今日の気分</h2>
+
+          <MoodGrid pleasure={pleasure} arousal={arousal} />
+
+          <div className="grid grid-cols-2 gap-3 text-center">
+            <Score
+              label="活性度"
+              hint={hint(savedVitality, "イキイキして活力がある", "だるくて元気が出ない")}
+              value={savedVitality}
+              max={TDMS_RANGE.vitality.max}
+            />
+            <Score
+              label="安定度"
+              hint={hint(savedStability, "ゆったりと落ち着いた", "イライラして緊張した")}
+              value={savedStability}
+              max={TDMS_RANGE.stability.max}
+            />
+            <Score
+              label="快適度"
+              hint={hint(pleasure, "快適で明るい気分", "不快で暗い気分")}
+              value={pleasure}
+              max={TDMS_RANGE.pleasure.max}
+            />
+            <Score
+              label="覚醒度"
+              hint={hint(arousal, "興奮して活発な気分", "眠くて不活発")}
+              value={arousal}
+              max={TDMS_RANGE.arousal.max}
+            />
           </div>
+
           {savedPssScore != null && (
-            <div className="border-t border-border pt-3">
-              <div className="flex items-baseline justify-between">
-                <p className="text-[10px] text-text-muted">
-                  知覚ストレス（PSS-10）
-                </p>
-                <p className="text-sm font-semibold tabular-nums">
-                  {savedPssScore}{" "}
-                  <span className="text-[10px] text-text-muted font-normal">
-                    / 40・
-                    {savedPssScore <= 13
-                      ? "低め"
-                      : savedPssScore <= 26
-                        ? "中程度"
-                        : "高め"}
-                  </span>
-                </p>
-              </div>
+            <div className="flex items-baseline justify-between border-t border-border pt-3">
+              <p className="text-[10px] text-text-muted">知覚ストレス（PSS-10）</p>
+              <p className="text-sm font-semibold tabular-nums">
+                {savedPssScore}
+                <span className="ml-1 text-[10px] font-normal text-text-muted">
+                  / 40・{pssBandLabel(savedPssScore)}
+                </span>
+              </p>
             </div>
           )}
         </div>
@@ -137,8 +119,7 @@ export function MoodForm({
           onClick={() => {
             startTransition(async () => {
               await clearMoodLog(date);
-              setPanasAnswers({});
-              setPssAnswers({});
+              setTdmsAnswers({});
               setSaved(false);
               router.refresh();
             });
@@ -154,27 +135,31 @@ export function MoodForm({
 
   return (
     <div className="space-y-6">
-      {/* PANAS */}
+      {legacyPanasPositive != null && (
+        <div className="rounded-xl border border-border bg-surface p-3 text-xs text-text-muted">
+          この日は旧尺度（PANAS）で記録されています。ポジ {legacyPanasPositive}
+          /25・ネガ {legacyPanasNegative}/25。保存すると新しい尺度の記録が加わります。
+        </div>
+      )}
+
       <div className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">
-          {IPANAS_INSTRUCTION}
-        </h2>
+        <h2 className="text-sm font-medium text-text-muted">{TDMS_INSTRUCTION}</h2>
         <div className="space-y-3">
-          {IPANAS_ITEMS.map((item) => (
+          {TDMS_ITEMS.map((item) => (
             <div key={item.id} className="space-y-1.5">
               <p className="text-sm">{item.word}</p>
               <div className="flex gap-1">
-                {PANAS_ANCHORS.map((anchor) => (
+                {TDMS_ANCHORS.map((anchor) => (
                   <button
                     key={anchor.value}
                     onClick={() =>
-                      setPanasAnswers((prev) => ({
+                      setTdmsAnswers((prev) => ({
                         ...prev,
-                        [item.id]: anchor.value as 1 | 2 | 3 | 4 | 5,
+                        [item.id]: anchor.value as 0 | 1 | 2 | 3 | 4 | 5,
                       }))
                     }
                     className={`flex-1 rounded-lg py-2 text-xs transition-colors ${
-                      panasAnswers[item.id] === anchor.value
+                      tdmsAnswers[item.id] === anchor.value
                         ? "bg-primary text-white"
                         : "border border-border bg-surface text-text-muted hover:text-text"
                     }`}
@@ -186,64 +171,66 @@ export function MoodForm({
             </div>
           ))}
         </div>
+        <div className="flex justify-between text-[10px] text-text-muted">
+          <span>0 = {TDMS_ANCHORS[0].label}</span>
+          <span>5 = {TDMS_ANCHORS[5].label}</span>
+        </div>
       </div>
 
-      {/* PSS (Sunday only) */}
-      {showPss && (
-        <div className="space-y-3">
-          <div className="rounded-xl bg-surface px-3 py-2">
-            <h2 className="text-sm font-medium text-text-muted">
-              月間ストレスチェック（月初のみ）
-            </h2>
-            <p className="text-[11px] text-text-muted">
-              {pssInstruction("この1ヶ月")}
-            </p>
-          </div>
-          <div className="space-y-3">
-            {PSS_ITEMS.map((item) => (
-              <div key={item.id} className="space-y-1.5">
-                <p className="text-sm">{item.text}</p>
-                <div className="flex gap-1">
-                  {PSS_ANCHORS.map((anchor) => (
-                    <button
-                      key={anchor.value}
-                      onClick={() =>
-                        setPssAnswers((prev) => ({
-                          ...prev,
-                          [item.id]: anchor.value as 0 | 1 | 2 | 3 | 4,
-                        }))
-                      }
-                      className={`flex-1 rounded-lg py-2 text-xs transition-colors ${
-                        pssAnswers[item.id] === anchor.value
-                          ? "bg-primary text-white"
-                          : "border border-border bg-surface text-text-muted hover:text-text"
-                      }`}
-                    >
-                      {anchor.value}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Save Button */}
       <button
         onClick={handleSave}
-        disabled={isPending || !panasComplete || (showPss && !pssComplete)}
+        disabled={isPending || !tdmsComplete}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
       >
         {isPending && <Spinner className="text-white" />}
         {isPending ? "保存中..." : "保存する"}
       </button>
 
-      {!panasComplete && (
+      {!tdmsComplete && (
         <p className="text-center text-xs text-text-muted">
-          {Object.keys(panasAnswers).length}/{IPANAS_ITEMS.length} 回答済み
+          {Object.keys(tdmsAnswers).length}/{TDMS_ITEMS.length} 回答済み
         </p>
       )}
+    </div>
+  );
+}
+
+/** 0 は中立。どちらの極のラベルも当てはまらない。 */
+function hint(value: number, positive: string, negative: string): string {
+  if (value === 0) return "どちらでもない";
+  return value > 0 ? positive : negative;
+}
+
+function Score({
+  label,
+  hint,
+  value,
+  max,
+}: {
+  label: string;
+  hint: string;
+  value: number;
+  max: number;
+}) {
+  return (
+    <div className="rounded-xl border border-border p-2">
+      <p className="text-[10px] text-text-muted">{label}</p>
+      <p
+        className={`text-lg font-semibold tabular-nums ${
+          value === 0
+            ? "text-text-muted"
+            : value > 0
+              ? "text-accent-green"
+              : "text-accent-red"
+        }`}
+      >
+        {value > 0 ? "+" : ""}
+        {value}
+        <span className="ml-0.5 text-[10px] font-normal text-text-muted">
+          / {max}
+        </span>
+      </p>
+      <p className="text-[10px] leading-tight text-text-muted">{hint}</p>
     </div>
   );
 }

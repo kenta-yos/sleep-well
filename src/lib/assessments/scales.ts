@@ -2,15 +2,111 @@
 // -------------------------------------------------------------------
 // 心理尺度の定義＋採点（フレームワーク非依存・サーバー/クライアント共用）
 //
-//   毎晩 : I-PANAS-SF（PANAS短縮版・10項目）
-//   週1  : PSS-10（知覚ストレス）
-//   ※ フル版PANAS-20 も任意で残してある（下部）
+//   毎晩 : TDMS（二次元気分尺度・8項目）
+//   ※ I-PANAS-SF / PANAS-20 / PSS-10 は過去データの読み取り用に残してある（下部）
 //
 // 出典:
+//   TDMS       : 坂入洋右・徳田英次・川原正人・谷木龍男・征矢英昭 (2003)
+//                「心理的覚醒度・快適度を測定する二次元気分尺度の開発」
+//                筑波大学体育科学系紀要 26, 27-36
+//                Sakairi, Nakatsuka & Shimizu (2013) Japanese Psychological
+//                Research 55(4), 338-349
 //   I-PANAS-SF : Thompson (2007)
 //   PANAS      : Watson, Clark & Tellegen (1988) / 日本語版 cf. 佐藤・安田 (2001)
 //   PSS-10     : Cohen, Kamarck & Mermelstein (1983) / 日本語版 cf. Mimura & Griffiths (2004)
+//
+// 2026-09 に毎晩の尺度を I-PANAS-SF から TDMS へ移行。理由は本文コメント参照。
 // -------------------------------------------------------------------
+
+// ===================================================================
+//  TDMS 二次元気分尺度（毎晩・既定）
+//
+//  I-PANAS-SF から乗り換えた理由:
+//  73日分の実データで全10項目の平均が1.04〜1.84（1-5尺度）に張り付いた。
+//  単極の強度評定を合計する形式は、感情の起伏が穏やかな回答者では
+//  必ず床に落ちる。TDMS は各次元を「正項目 − 負項目」で採点するため、
+//  全項目0でも全項目5でも得点は0（中央）になり、構造的に床効果が出ない。
+//  加えて覚醒度（興奮 ⇔ 眠気）の軸を持ち、これは睡眠と直結する。
+//
+//  注意: 原版の教示は「今の気分」を尋ねる瞬間尺度。本アプリは1日を
+//  振り返って記録する運用なので教示を日単位に変えている。原版との
+//  スコア互換性はその分だけ失われる。
+// ===================================================================
+export const TDMS_INSTRUCTION =
+  "今日1日を振り返って、それぞれどの程度あてはまりましたか。";
+
+/** 属する因子と符号。得点 = 正項目の合計 − 負項目の合計。 */
+export type TdmsFactor = "vitality" | "stability";
+
+export interface TdmsItem {
+  id: string;
+  word: string;
+  factor: TdmsFactor;
+  /** +1 なら加算、-1 なら減算 */
+  sign: 1 | -1;
+}
+
+export const TDMS_ANCHORS = [
+  { value: 0, label: "全くそうでない" },
+  { value: 1, label: "" },
+  { value: 2, label: "" },
+  { value: 3, label: "" },
+  { value: 4, label: "" },
+  { value: 5, label: "非常にそう" },
+] as const;
+
+// 原版の提示順。因子ごとにまとめず、この並びのまま出すこと。
+export const TDMS_ITEMS: TdmsItem[] = [
+  { id: "tdms_calm", word: "落ち着いた", factor: "stability", sign: 1 },
+  { id: "tdms_irritated", word: "イライラした", factor: "stability", sign: -1 },
+  { id: "tdms_listless", word: "無気力な", factor: "vitality", sign: -1 },
+  { id: "tdms_energetic", word: "活気にあふれた", factor: "vitality", sign: 1 },
+  { id: "tdms_relaxed", word: "リラックスした", factor: "stability", sign: 1 },
+  { id: "tdms_tense", word: "ピリピリした", factor: "stability", sign: -1 },
+  { id: "tdms_sluggish", word: "だらけた", factor: "vitality", sign: -1 },
+  { id: "tdms_lively", word: "イキイキした", factor: "vitality", sign: 1 },
+];
+
+export type TdmsAnswers = Record<string, 0 | 1 | 2 | 3 | 4 | 5>;
+
+export interface TdmsResult {
+  /** 活性度: +は「イキイキして活力がある」、−は「だるくて元気が出ない」 */
+  vitality: number;
+  /** 安定度: +は「ゆったりと落ち着いた」、−は「イライラして緊張した」 */
+  stability: number;
+  /** 快適度 = 活性度 + 安定度。+は「快適で明るい気分」 */
+  pleasure: number;
+  /** 覚醒度 = 活性度 − 安定度。+は「興奮して活発」、−は「眠くて不活発」 */
+  arousal: number;
+  complete: boolean;
+}
+
+export const TDMS_RANGE = {
+  vitality: { min: -10, max: 10 },
+  stability: { min: -10, max: 10 },
+  pleasure: { min: -20, max: 20 },
+  arousal: { min: -20, max: 20 },
+} as const;
+
+export function scoreTdms(answers: Partial<TdmsAnswers>): TdmsResult {
+  let vitality = 0;
+  let stability = 0;
+  let answered = 0;
+  for (const item of TDMS_ITEMS) {
+    const v = answers[item.id];
+    if (v == null) continue;
+    answered++;
+    if (item.factor === "vitality") vitality += item.sign * v;
+    else stability += item.sign * v;
+  }
+  return {
+    vitality,
+    stability,
+    pleasure: vitality + stability,
+    arousal: vitality - stability,
+    complete: answered === TDMS_ITEMS.length,
+  };
+}
 
 // ===================================================================
 //  PANAS 共通
@@ -71,7 +167,8 @@ export function scorePanas(
 }
 
 // ===================================================================
-//  I-PANAS-SF（毎晩・既定）— PA5 + NA5、各サブスケール 5〜25
+//  I-PANAS-SF（〜2026-09 の毎晩尺度・過去データ読み取り用）
+//  PA5 + NA5、各サブスケール 5〜25
 // ===================================================================
 export const IPANAS_INSTRUCTION = "今日1日、それぞれの気持ちをどの程度感じましたか。";
 
@@ -90,49 +187,14 @@ export const IPANAS_ITEMS: PanasItem[] = [
 ];
 
 // ===================================================================
-//  PSS-10（週1）— 0〜40、高いほど知覚ストレスが大きい
+//  PSS-10（〜2026-09 の月次尺度・過去データ表示用）
+//
+//  入力は 2026-09 に終了。半年で3回しか実施されず、得点は 10 / 9 / 11 と
+//  ほぼ動かなかった。項目バンクと採点は消し、過去の得点を表示するための
+//  区分ラベルだけ残す。列とデータはそのまま保持している。
+//  出典: Cohen, Kamarck & Mermelstein (1983) / 日本語版 cf. Mimura & Griffiths (2004)
 // ===================================================================
-export interface PssItem {
-  id: string;
-  text: string;
-  reverse: boolean; // 逆転項目（ポジティブな対処）: score = 4 - raw
-}
-
-export const PSS_ANCHORS = [
-  { value: 0, label: "まったくない" },
-  { value: 1, label: "ほとんどない" },
-  { value: 2, label: "ときどき" },
-  { value: 3, label: "しばしば" },
-  { value: 4, label: "とても頻繁に" },
-] as const;
-
-/** 標準は "この1ヶ月"（週1運用推奨）。毎晩運用なら "ここ数日" 等に差し替え可（比較互換は失われる）。 */
-export function pssInstruction(windowLabel = "この1ヶ月"): string {
-  return `${windowLabel}に、次のことをどのくらいの頻度で感じましたか。`;
-}
-
-export const PSS_ITEMS: PssItem[] = [
-  { id: "pss1", text: "予期しないことが起きて動揺した", reverse: false },
-  { id: "pss2", text: "人生の大切なことを自分でコントロールできないと感じた", reverse: false },
-  { id: "pss3", text: "神経質になったり、強いストレスを感じた", reverse: false },
-  { id: "pss4", text: "自分の問題にうまく対処できる自信があった", reverse: true },
-  { id: "pss5", text: "物事が自分の思い通りに進んでいると感じた", reverse: true },
-  { id: "pss6", text: "やるべきことすべてに対処しきれないと感じた", reverse: false },
-  { id: "pss7", text: "生活上のいらだちをうまく抑えることができた", reverse: true },
-  { id: "pss8", text: "物事をうまくこなせていると感じた", reverse: true },
-  { id: "pss9", text: "自分にはどうにもできないことで腹が立った", reverse: false },
-  { id: "pss10", text: "困難が積み重なり、乗り越えられないと感じた", reverse: false },
-];
-
-export type PssAnswers = Record<string, 0 | 1 | 2 | 3 | 4>;
 export type PssBand = "low" | "moderate" | "high";
-
-export interface PssResult {
-  score: number; // 0-40
-  band: PssBand;
-  bandLabel: string;
-  complete: boolean;
-}
 
 /** 目安（厳密な臨床カットオフではない）: 0-13低 / 14-26中 / 27-40高 */
 export function pssBand(score: number): PssBand {
@@ -147,17 +209,8 @@ const PSS_BAND_LABEL: Record<PssBand, string> = {
   high: "高め",
 };
 
-export function scorePss(answers: Partial<PssAnswers>): PssResult {
-  let score = 0;
-  let answered = 0;
-  for (const item of PSS_ITEMS) {
-    const raw = answers[item.id];
-    if (raw == null) continue;
-    answered++;
-    score += item.reverse ? 4 - raw : raw;
-  }
-  const band = pssBand(score);
-  return { score, band, bandLabel: PSS_BAND_LABEL[band], complete: answered === PSS_ITEMS.length };
+export function pssBandLabel(score: number): string {
+  return PSS_BAND_LABEL[pssBand(score)];
 }
 
 // ===================================================================

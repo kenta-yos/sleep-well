@@ -55,6 +55,17 @@ function buildDataBlock(
     reading: l.reading,
     lateMeal: l.lateMeal,
     note: l.note,
+    // TDMS（2026-09〜）。快適度と覚醒度は導出値だが、モデルに再計算させず
+    // 明示的に渡す。
+    ...(l.tdmsVitality != null && l.tdmsStability != null
+      ? {
+          tdms活性度: l.tdmsVitality,
+          tdms安定度: l.tdmsStability,
+          tdms快適度: l.tdmsVitality + l.tdmsStability,
+          tdms覚醒度: l.tdmsVitality - l.tdmsStability,
+        }
+      : {}),
+    // I-PANAS-SF（〜2026-09）。旧尺度なので TDMS とは直接比較できない。
     ...(l.panasPositive != null
       ? {
           panasPositive: l.panasPositive,
@@ -100,7 +111,14 @@ ${previousSummaries
 
 ${prevContext}## 構成（この順番で書いてください）
 1. **睡眠の傾向** — 平均睡眠時間、深い睡眠・REMの割合、就寝/起床リズムの安定度、すっきり度の分布。週ごとの変化があれば触れる。日記から読み取れる睡眠に影響した出来事にも言及。${previousSummaries && previousSummaries.length > 0 ? "前月との比較も入れる。" : ""}
-2. **ストレスと気分の傾向** — ストレスカテゴリ（仕事・恋愛・将来・友人等）の推移と、PANAS（ポジ感情PA/ネガ感情NA、各5-25）のバランス推移を合わせて分析。日記を踏まえて、具体的に何がストレスや感情の変化を引き起こしたかを詳しく。PSS-10（知覚ストレス、0-40）のデータがあれば、全体的なストレス負荷の水準にも言及。${previousSummaries && previousSummaries.length > 0 ? "過去数ヶ月で繰り返されているパターンがあれば指摘する。" : ""}
+2. **ストレスと気分の傾向** — ストレスカテゴリ（仕事・恋愛・将来・友人等）の推移と、気分スコアの推移を合わせて分析。日記を踏まえて、具体的に何がストレスや感情の変化を引き起こしたかを詳しく。${previousSummaries && previousSummaries.length > 0 ? "過去数ヶ月で繰り返されているパターンがあれば指摘する。" : ""}
+
+### 気分スコアの読み方
+2026年9月に気分の尺度を入れ替えている。同じ「気分」でも別物なので、両者の数値を直接比較したり、連続した推移として扱ったりしないこと。
+- tdms活性度 / tdms安定度（各 -10〜+10）: 2026年9月以降。活性度は＋が「イキイキして活力がある」、−が「だるくて元気が出ない」。安定度は＋が「ゆったりと落ち着いた」、−が「イライラして緊張した」。
+- tdms快適度 = 活性度＋安定度、tdms覚醒度 = 活性度−安定度（各 -20〜+20）。覚醒度は＋が「興奮して活発」、−が「眠くて不活発」で、睡眠と結びつけて論じる価値がある。
+- panasPositive / panasNegative（各 5-25）: 2026年9月より前。回答が低い側に偏っており、変動はほとんど情報を持たない。数値の細かい上下を根拠にした解釈はしないこと。
+- pssScore（0-40）: 2026年9月に測定終了。データがある月のみ言及。
 3. **${month}月のまとめ** — どんな1ヶ月だったかを日記ベースで詳しくまとめる。仕事、人間関係、プライベートの活動、心境の変化、印象的なエピソードなど、振り返りとして読み応えのある内容にする。${previousSummaries && previousSummaries.length > 0 ? "過去からの変化や成長にも触れる。" : ""}
 
 ${buildDataBlock(sleepRecords, dailyLogs)}

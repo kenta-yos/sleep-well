@@ -46,6 +46,12 @@ export const dailyLogs = pgTable(
     reading: boolean("reading").default(false),
     lateMeal: boolean("late_meal").default(false),
     note: text("note"),
+    // TDMS（2026-09〜の毎晩尺度）。快適度・覚醒度は活性度と安定度から
+    // 一意に決まるので保存しない。
+    tdmsAnswers: json("tdms_answers"),
+    tdmsVitality: integer("tdms_vitality"), // 活性度 -10〜+10
+    tdmsStability: integer("tdms_stability"), // 安定度 -10〜+10
+    // I-PANAS-SF（〜2026-09）。過去データを読むために残す。
     panasAnswers: json("panas_answers"),
     panasPositive: integer("panas_positive"),
     panasNegative: integer("panas_negative"),
@@ -98,5 +104,12 @@ export type TrendsSleep = Pick<
 };
 export type TrendsLog = Pick<
   DailyLog,
-  "date" | "freshnessScore" | "panasPositive" | "panasNegative" | "stressSources"
+  | "date"
+  | "freshnessScore"
+  | "stressSources"
+  | "tdmsVitality"
+  | "tdmsStability"
+  // Kept so charts can mark where the mood scale changed in 2026-09.
+  | "panasPositive"
+  | "panasNegative"
 >;

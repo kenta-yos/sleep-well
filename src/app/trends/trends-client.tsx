@@ -102,8 +102,8 @@ export function TrendsClient({
     const l = logMap.get(date);
     return {
       date,
-      pa: l?.panasPositive ?? null,
-      na: l?.panasNegative ?? null,
+      vitality: l?.tdmsVitality ?? null,
+      stability: l?.tdmsStability ?? null,
       freshness: l?.freshnessScore ?? undefined,
     };
   });

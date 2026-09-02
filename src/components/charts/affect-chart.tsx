@@ -1,9 +1,12 @@
 "use client";
 
 // src/components/charts/affect-chart.tsx
-// PANAS のポジ感情(PA)・ネガ感情(NA)を時系列で。すっきり度を右軸に重ねて
+// TDMS の活性度・安定度を時系列で。すっきり度を右軸に重ねて
 // 「身体は整ってるのに休まらない日、感情側で何が起きてるか」を眺める用。
 // 既存の sleep-duration-chart / heart-rate-chart と同じ作法（recharts / oklch / token classes）。
+//
+// 2026-09 より前は I-PANAS-SF で記録しており、尺度が違うのでこの図には出さない。
+// 過去の値は各日のログ画面と月次サマリーで読める。
 
 import {
   ComposedChart,
@@ -18,33 +21,36 @@ import {
 
 interface DataPoint {
   date: string;
-  pa: number | null; // ポジ感情合計 10-50
-  na: number | null; // ネガ感情合計 10-50
+  vitality: number | null; // 活性度 -10〜+10
+  stability: number | null; // 安定度 -10〜+10
   freshness?: number; // すっきり度 1-5（参照用・任意）
 }
 
-const PA_COLOR = "oklch(0.72 0.17 155)"; // accent-green
-const NA_COLOR = "oklch(0.65 0.2 25)"; // accent-red
+const VITALITY_COLOR = "oklch(0.72 0.17 155)"; // accent-green
+const STABILITY_COLOR = "oklch(0.7 0.15 250)"; // accent-blue
 const FRESH_COLOR = "oklch(0.8 0.15 85)"; // accent-yellow
 
 export function AffectChart({ data }: { data: DataPoint[] }) {
   const chartData = data
-    .filter((d) => d.pa != null || d.na != null)
+    .filter((d) => d.vitality != null || d.stability != null)
     .map((d) => ({
       label: d.date.slice(5), // MM-DD
-      pa: d.pa,
-      na: d.na,
-      balance: d.pa != null && d.na != null ? d.pa - d.na : null,
+      vitality: d.vitality,
+      stability: d.stability,
+      pleasure:
+        d.vitality != null && d.stability != null ? d.vitality + d.stability : null,
+      arousal:
+        d.vitality != null && d.stability != null ? d.vitality - d.stability : null,
       freshness: d.freshness ?? null,
     }));
 
   if (chartData.length === 0) {
     return (
       <div className="space-y-2">
-        <h3 className="text-sm font-medium">気分（ポジ / ネガ）</h3>
+        <h3 className="text-sm font-medium">気分（活性度 / 安定度）</h3>
         <div className="flex h-40 items-center justify-center rounded-2xl border border-border bg-surface">
           <p className="px-4 text-center text-sm text-text-muted">
-            夜のチェックインを記録すると、ここにポジ・ネガの推移が出ます
+            気分チェックインを記録すると、ここに活性度・安定度の推移が出ます
           </p>
         </div>
       </div>
@@ -52,23 +58,23 @@ export function AffectChart({ data }: { data: DataPoint[] }) {
   }
 
   const xInterval = Math.max(1, Math.ceil(chartData.length / 6) - 1);
-
-  // 直近の値（ヘッダーの一言用）
-  const latest = [...chartData].reverse().find((d) => d.balance != null);
+  const latest = [...chartData].reverse().find((d) => d.pleasure != null);
 
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-medium">気分（ポジ / ネガ）</h3>
-        {latest?.balance != null && (
-          <span className="text-xs text-text-muted tabular-nums">
-            直近バランス{" "}
+        <h3 className="text-sm font-medium">気分（活性度 / 安定度）</h3>
+        {latest?.pleasure != null && (
+          <span className="text-xs tabular-nums text-text-muted">
+            直近快適度{" "}
             <span
               className="font-medium"
-              style={{ color: latest.balance >= 0 ? PA_COLOR : NA_COLOR }}
+              style={{
+                color: latest.pleasure >= 0 ? VITALITY_COLOR : "oklch(0.65 0.2 25)",
+              }}
             >
-              {latest.balance > 0 ? "+" : ""}
-              {latest.balance}
+              {latest.pleasure > 0 ? "+" : ""}
+              {latest.pleasure}
             </span>
           </span>
         )}
@@ -78,9 +84,9 @@ export function AffectChart({ data }: { data: DataPoint[] }) {
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ left: -20, right: 5 }}>
             <defs>
-              <linearGradient id="paFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={PA_COLOR} stopOpacity={0.18} />
-                <stop offset="100%" stopColor={PA_COLOR} stopOpacity={0} />
+              <linearGradient id="vitalityFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={VITALITY_COLOR} stopOpacity={0.18} />
+                <stop offset="100%" stopColor={VITALITY_COLOR} stopOpacity={0} />
               </linearGradient>
             </defs>
 
@@ -89,11 +95,11 @@ export function AffectChart({ data }: { data: DataPoint[] }) {
               tick={{ fontSize: 10, fill: "#888" }}
               interval={xInterval}
             />
-            {/* 左軸: PA / NA（10-50） */}
+            {/* 左軸: 活性度 / 安定度（-10〜+10） */}
             <YAxis
               yAxisId="affect"
-              domain={[5, 25]}
-              ticks={[5, 10, 15, 20, 25]}
+              domain={[-10, 10]}
+              ticks={[-10, -5, 0, 5, 10]}
               tick={{ fontSize: 10, fill: "#888" }}
             />
             {/* 右軸: すっきり度（1-5・非表示） */}
@@ -112,16 +118,28 @@ export function AffectChart({ data }: { data: DataPoint[] }) {
                 return (
                   <div className="rounded-xl border border-border bg-[#1a1a2e] px-3 py-2 text-xs">
                     <p className="text-text-muted">{d.label}</p>
-                    {d.pa != null && (
-                      <p style={{ color: PA_COLOR }}>ポジ: {d.pa}</p>
+                    {d.vitality != null && (
+                      <p style={{ color: VITALITY_COLOR }}>
+                        活性度: {d.vitality > 0 ? "+" : ""}
+                        {d.vitality}
+                      </p>
                     )}
-                    {d.na != null && (
-                      <p style={{ color: NA_COLOR }}>ネガ: {d.na}</p>
+                    {d.stability != null && (
+                      <p style={{ color: STABILITY_COLOR }}>
+                        安定度: {d.stability > 0 ? "+" : ""}
+                        {d.stability}
+                      </p>
                     )}
-                    {d.balance != null && (
+                    {d.pleasure != null && (
                       <p className="font-medium text-text">
-                        バランス: {d.balance > 0 ? "+" : ""}
-                        {d.balance}
+                        快適度: {d.pleasure > 0 ? "+" : ""}
+                        {d.pleasure}
+                      </p>
+                    )}
+                    {d.arousal != null && (
+                      <p className="text-text-muted">
+                        覚醒度: {d.arousal > 0 ? "+" : ""}
+                        {d.arousal}
                       </p>
                     )}
                     {d.freshness != null && (
@@ -134,22 +152,21 @@ export function AffectChart({ data }: { data: DataPoint[] }) {
               }}
             />
 
-            {/* PA を面で強調 */}
             <Area
               yAxisId="affect"
               type="monotone"
-              dataKey="pa"
-              stroke={PA_COLOR}
+              dataKey="vitality"
+              stroke={VITALITY_COLOR}
               strokeWidth={2}
-              fill="url(#paFill)"
+              fill="url(#vitalityFill)"
               dot={{ r: 2 }}
               connectNulls
             />
             <Line
               yAxisId="affect"
               type="monotone"
-              dataKey="na"
-              stroke={NA_COLOR}
+              dataKey="stability"
+              stroke={STABILITY_COLOR}
               strokeWidth={2}
               dot={{ r: 2 }}
               connectNulls
@@ -165,18 +182,19 @@ export function AffectChart({ data }: { data: DataPoint[] }) {
               dot={false}
               connectNulls
             />
-            <ReferenceLine yAxisId="affect" y={15} stroke="#444" strokeDasharray="2 4" />
+            {/* 0 が中立。上下どちらにも振れる。 */}
+            <ReferenceLine yAxisId="affect" y={0} stroke="#444" strokeDasharray="2 4" />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-muted">
-        <Legend color={PA_COLOR} label="ポジ感情 (PA)" />
-        <Legend color={NA_COLOR} label="ネガ感情 (NA)" />
+        <Legend color={VITALITY_COLOR} label="活性度（元気 ⇔ だるい）" />
+        <Legend color={STABILITY_COLOR} label="安定度（落ち着き ⇔ 緊張）" />
         <Legend color={FRESH_COLOR} label="すっきり度（右軸）" dashed />
       </div>
       <p className="px-1 text-[11px] leading-relaxed text-text-muted">
-        PAとNAは独立した2軸。「両方高い日（充実だが気を張った）」もありえます。
+        2軸は独立。快適度は2つの和、覚醒度は差です。覚醒度が低い日は「眠くて不活発」で、睡眠と結びつけて見る価値があります。
       </p>
     </div>
   );
