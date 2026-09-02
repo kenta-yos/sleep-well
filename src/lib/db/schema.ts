@@ -3,7 +3,6 @@ import {
   text,
   date,
   integer,
-  real,
   json,
   timestamp,
   serial,
@@ -59,30 +58,45 @@ export const dailyLogs = pgTable(
   (table) => [uniqueIndex("daily_logs_date_idx").on(table.date)]
 );
 
-export const computedMetrics = pgTable(
-  "computed_metrics",
+export const aiInsights = pgTable(
+  "ai_insights",
   {
     id: serial("id").primaryKey(),
     date: date("date").notNull(),
-    bedrimeDeviationMinutes: real("bedtime_deviation_minutes"),
-    avgFreshness7d: real("avg_freshness_7d"),
-    avgSleepDuration7d: real("avg_sleep_duration_7d"),
+    type: text("type").notNull(), // 'monthly' — the month's 1st is the date
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   },
-  (table) => [uniqueIndex("computed_metrics_date_idx").on(table.date)]
+  // One insight per (month, type): regenerating replaces instead of piling up.
+  (table) => [uniqueIndex("ai_insights_date_type_idx").on(table.date, table.type)]
 );
-
-export const aiInsights = pgTable("ai_insights", {
-  id: serial("id").primaryKey(),
-  date: date("date").notNull(),
-  type: text("type").notNull(), // 'nightly' | 'weekly'
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
 
 // Types
 export type SleepRecord = typeof sleepRecords.$inferSelect;
 export type NewSleepRecord = typeof sleepRecords.$inferInsert;
 export type DailyLog = typeof dailyLogs.$inferSelect;
 export type NewDailyLog = typeof dailyLogs.$inferInsert;
-export type ComputedMetric = typeof computedMetrics.$inferSelect;
 export type AiInsight = typeof aiInsights.$inferSelect;
+
+// The subsets the trends charts actually read. Keeps the page from shipping
+// stage_items, PANAS answers and diary notes to the browser.
+export type TrendsSleep = Pick<
+  SleepRecord,
+  | "date"
+  | "totalSleepMinutes"
+  | "deepMinutes"
+  | "lightMinutes"
+  | "remMinutes"
+  | "avgHeartRate"
+  | "minHeartRate"
+  | "maxHeartRate"
+> & {
+  // Serialized to ISO strings before crossing the server/client boundary.
+  bedtime: string | null;
+  wakeTime: string | null;
+};
+export type TrendsLog = Pick<
+  DailyLog,
+  "date" | "freshnessScore" | "panasPositive" | "panasNegative" | "stressSources"
+>;

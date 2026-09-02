@@ -1,6 +1,6 @@
 "use client";
 
-import type { SleepRecord } from "@/lib/db/schema";
+import type { TrendsSleep } from "@/lib/db/schema";
 
 function median(nums: number[]): number | null {
   if (nums.length === 0) return null;
@@ -50,7 +50,7 @@ function morningMinutesToTime(mm: number): string {
 export function SleepStatsSummary({
   records,
 }: {
-  records: SleepRecord[];
+  records: TrendsSleep[];
 }) {
   const withSleep = records.filter((r) => r.totalSleepMinutes && r.totalSleepMinutes > 0);
   const medSleep = median(withSleep.map((r) => r.totalSleepMinutes!));

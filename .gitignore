@@ -37,6 +37,7 @@ yarn-error.log*
 
 # personal data
 Myfitness-data/
+backup-*.json
 
 # typescript
 *.tsbuildinfo

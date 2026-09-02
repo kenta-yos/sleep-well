@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { SleepRecord, DailyLog } from "@/lib/db/schema";
+import type { TrendsSleep, TrendsLog } from "@/lib/db/schema";
 
 const STRESS_CATEGORIES = [
   { id: "work", label: "仕事" },
@@ -95,11 +95,11 @@ export function MonthlyOverview({
   sleepRecords,
   dailyLogs,
 }: {
-  sleepRecords: SleepRecord[];
-  dailyLogs: DailyLog[];
+  sleepRecords: TrendsSleep[];
+  dailyLogs: TrendsLog[];
 }) {
   // Group by month
-  const sleepByMonth = new Map<string, SleepRecord[]>();
+  const sleepByMonth = new Map<string, TrendsSleep[]>();
   for (const r of sleepRecords) {
     const key = r.date.slice(0, 7);
     const arr = sleepByMonth.get(key) ?? [];
@@ -107,7 +107,7 @@ export function MonthlyOverview({
     sleepByMonth.set(key, arr);
   }
 
-  const logsByMonth = new Map<string, DailyLog[]>();
+  const logsByMonth = new Map<string, TrendsLog[]>();
   for (const l of dailyLogs) {
     const key = l.date.slice(0, 7);
     const arr = logsByMonth.get(key) ?? [];

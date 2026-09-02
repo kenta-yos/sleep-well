@@ -8,7 +8,7 @@ import { SleepStatsSummary } from "@/components/charts/sleep-stats-summary";
 import { HeartRateChart } from "@/components/charts/heart-rate-chart";
 import { AffectChart } from "@/components/charts/affect-chart";
 import { MonthlyOverview } from "@/components/charts/monthly-overview";
-import type { SleepRecord, DailyLog } from "@/lib/db/schema";
+import type { TrendsSleep, TrendsLog } from "@/lib/db/schema";
 
 function generateDateRange(startDate: string, endDate: string): string[] {
   const dates: string[] = [];
@@ -44,20 +44,20 @@ export function TrendsClient({
   sleepRecords,
   dailyLogs,
 }: {
-  sleepRecords: SleepRecord[];
-  dailyLogs: DailyLog[];
+  sleepRecords: TrendsSleep[];
+  dailyLogs: TrendsLog[];
 }) {
   const [tab, setTab] = useState<Tab>("recent");
   const days = 30;
 
   const sleepMap = useMemo(() => {
-    const map = new Map<string, SleepRecord>();
+    const map = new Map<string, TrendsSleep>();
     for (const r of sleepRecords) map.set(r.date, r);
     return map;
   }, [sleepRecords]);
 
   const logMap = useMemo(() => {
-    const map = new Map<string, DailyLog>();
+    const map = new Map<string, TrendsLog>();
     for (const l of dailyLogs) map.set(l.date, l);
     return map;
   }, [dailyLogs]);
@@ -83,8 +83,8 @@ export function TrendsClient({
     const r = sleepMap.get(date);
     return {
       date,
-      bedtime: (r?.bedtime as string | null) ?? null,
-      wakeTime: (r?.wakeTime as string | null) ?? null,
+      bedtime: r?.bedtime ?? null,
+      wakeTime: r?.wakeTime ?? null,
     };
   });
 

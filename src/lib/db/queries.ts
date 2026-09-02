@@ -1,5 +1,6 @@
 import { db } from "./index";
-import { sleepRecords, dailyLogs, computedMetrics, aiInsights } from "./schema";
+import { sleepRecords, dailyLogs, aiInsights } from "./schema";
+import type { TrendsSleep } from "./schema";
 import { eq, desc, gte, lte, and, sql } from "drizzle-orm";
 
 // Sleep Records
@@ -21,14 +22,6 @@ export async function getRecentSleepRecords(days: number) {
     .from(sleepRecords)
     .where(gte(sleepRecords.date, cutoffStr))
     .orderBy(desc(sleepRecords.date));
-}
-
-export async function getSleepRecordsRange(startDate: string, endDate: string) {
-  return db
-    .select()
-    .from(sleepRecords)
-    .where(and(gte(sleepRecords.date, startDate), lte(sleepRecords.date, endDate)))
-    .orderBy(sleepRecords.date);
 }
 
 // Daily Logs
@@ -53,51 +46,46 @@ export async function getRecentDailyLogs(days: number) {
 }
 
 // Combined data for trends
-export async function getCombinedData(days: number) {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
-  const cutoffStr = cutoff.toISOString().split("T")[0];
-
+// Trends page: only the columns the charts actually read. Selecting * shipped
+// stage_items, panas_answers and every diary note to the browser (~373KB).
+export async function getTrendsData() {
   const sleep = await db
-    .select()
-    .from(sleepRecords)
-    .where(gte(sleepRecords.date, cutoffStr))
-    .orderBy(sleepRecords.date);
-
-  const logs = await db
-    .select()
-    .from(dailyLogs)
-    .where(gte(dailyLogs.date, cutoffStr))
-    .orderBy(dailyLogs.date);
-
-  return { sleep, logs };
-}
-
-export async function getAllCombinedData() {
-  const sleep = await db
-    .select()
+    .select({
+      date: sleepRecords.date,
+      bedtime: sleepRecords.bedtime,
+      wakeTime: sleepRecords.wakeTime,
+      totalSleepMinutes: sleepRecords.totalSleepMinutes,
+      deepMinutes: sleepRecords.deepMinutes,
+      lightMinutes: sleepRecords.lightMinutes,
+      remMinutes: sleepRecords.remMinutes,
+      avgHeartRate: sleepRecords.avgHeartRate,
+      minHeartRate: sleepRecords.minHeartRate,
+      maxHeartRate: sleepRecords.maxHeartRate,
+    })
     .from(sleepRecords)
     .orderBy(sleepRecords.date);
 
   const logs = await db
-    .select()
+    .select({
+      date: dailyLogs.date,
+      freshnessScore: dailyLogs.freshnessScore,
+      panasPositive: dailyLogs.panasPositive,
+      panasNegative: dailyLogs.panasNegative,
+      stressSources: dailyLogs.stressSources,
+    })
     .from(dailyLogs)
     .orderBy(dailyLogs.date);
 
-  return { sleep, logs };
+  const serialized: TrendsSleep[] = sleep.map((r) => ({
+    ...r,
+    bedtime: r.bedtime?.toISOString() ?? null,
+    wakeTime: r.wakeTime?.toISOString() ?? null,
+  }));
+
+  return { sleep: serialized, logs };
 }
 
 // AI Insights
-export async function getLatestWeeklyInsight() {
-  const [insight] = await db
-    .select()
-    .from(aiInsights)
-    .where(eq(aiInsights.type, "weekly"))
-    .orderBy(desc(aiInsights.date))
-    .limit(1);
-  return insight ?? null;
-}
-
 export async function getLatestMonthlyInsight() {
   const [insight] = await db
     .select()
@@ -114,7 +102,6 @@ export async function getMonthlyInsight(year: number, month: number) {
     .select()
     .from(aiInsights)
     .where(and(eq(aiInsights.type, "monthly"), eq(aiInsights.date, date)))
-    .orderBy(desc(aiInsights.createdAt))
     .limit(1);
   return insight ?? null;
 }

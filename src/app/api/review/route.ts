@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { db } from "@/lib/db";
 import { aiInsights } from "@/lib/db/schema";
+import { sql } from "drizzle-orm";
 import {
   getMonthlyData,
   getMonthlyInsight,
@@ -90,11 +91,17 @@ export async function POST(req: NextRequest) {
       if (fullContent.length > 0) {
         try {
           const pad = (n: number) => String(n).padStart(2, "0");
-          await db.insert(aiInsights).values({
-            date: `${year}-${pad(month)}-01`,
-            type: "monthly",
-            content: fullContent,
-          });
+          await db
+            .insert(aiInsights)
+            .values({
+              date: `${year}-${pad(month)}-01`,
+              type: "monthly",
+              content: fullContent,
+            })
+            .onConflictDoUpdate({
+              target: [aiInsights.date, aiInsights.type],
+              set: { content: sql`excluded.content`, updatedAt: sql`now()` },
+            });
         } catch (e) {
           console.error("Failed to save summary to DB:", e);
         }
