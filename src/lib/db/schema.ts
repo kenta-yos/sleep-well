@@ -109,7 +109,6 @@ export type TrendsLog = Pick<
   | "stressSources"
   | "tdmsVitality"
   | "tdmsStability"
-  // Kept so charts can mark where the mood scale changed in 2026-09.
-  | "panasPositive"
-  | "panasNegative"
+  // Input retired in 2026-09, but the three recorded months still plot.
+  | "pssScore"
 >;

@@ -72,8 +72,7 @@ export async function getTrendsData() {
       stressSources: dailyLogs.stressSources,
       tdmsVitality: dailyLogs.tdmsVitality,
       tdmsStability: dailyLogs.tdmsStability,
-      panasPositive: dailyLogs.panasPositive,
-      panasNegative: dailyLogs.panasNegative,
+      pssScore: dailyLogs.pssScore,
     })
     .from(dailyLogs)
     .orderBy(dailyLogs.date);
