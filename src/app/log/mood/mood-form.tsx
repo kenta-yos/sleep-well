@@ -13,6 +13,7 @@ import {
 } from "@/lib/assessments/scales";
 import { saveMoodLog, clearMoodLog } from "@/actions/log-actions";
 import { Spinner } from "@/components/ui/spinner";
+import { Toast, useToast } from "@/components/ui/toast";
 import { MoodGrid } from "@/components/log/mood-grid";
 
 export function MoodForm({
@@ -39,6 +40,7 @@ export function MoodForm({
   );
   const [saved, setSaved] = useState(!!initialTdms);
   const [isPending, startTransition] = useTransition();
+  const { toast, showToast } = useToast();
   const router = useRouter();
 
   const tdmsComplete = TDMS_ITEMS.every((item) => tdmsAnswers[item.id] != null);
@@ -48,12 +50,18 @@ export function MoodForm({
     const tdms = scoreTdms(tdmsAnswers as TdmsAnswers);
 
     startTransition(async () => {
-      await saveMoodLog(date, {
-        tdmsAnswers: tdmsAnswers as Record<string, number>,
-        tdmsVitality: tdms.vitality,
-        tdmsStability: tdms.stability,
-      });
+      try {
+        await saveMoodLog(date, {
+          tdmsAnswers: tdmsAnswers as Record<string, number>,
+          tdmsVitality: tdms.vitality,
+          tdmsStability: tdms.stability,
+        });
+      } catch {
+        showToast("保存に失敗しました", "error");
+        return;
+      }
       setSaved(true);
+      showToast("保存しました");
       router.refresh();
     });
   }
@@ -64,6 +72,8 @@ export function MoodForm({
 
     return (
       <div className="space-y-4">
+        <Toast toast={toast} />
+
         <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
           <h2 className="text-sm font-medium">今日の気分</h2>
 
@@ -135,6 +145,8 @@ export function MoodForm({
 
   return (
     <div className="space-y-6">
+      <Toast toast={toast} />
+
       {legacyPanasPositive != null && (
         <div className="rounded-xl border border-border bg-surface p-3 text-xs text-text-muted">
           この日は旧尺度（PANAS）で記録されています。ポジ {legacyPanasPositive}

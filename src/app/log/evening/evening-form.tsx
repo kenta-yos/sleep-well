@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { StressSources } from "@/components/log/stress-sources";
 import { HabitToggle } from "@/components/log/habit-toggle";
 import { Spinner } from "@/components/ui/spinner";
+import { Toast, useToast } from "@/components/ui/toast";
 import { saveEveningLog, clearEveningLog } from "@/actions/log-actions";
 
 interface FormData {
@@ -60,6 +61,7 @@ export function EveningForm({
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [recoverable, setRecoverable] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { toast, showToast } = useToast();
   const router = useRouter();
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -81,11 +83,12 @@ export function EveningForm({
   }, [date, initialData]);
 
   const persist = useCallback(
-    async (next: FormData) => {
+    async (next: FormData, announce = false) => {
       setSaveState("saving");
       try {
         await saveEveningLog(date, next);
         setSaveState("saved");
+        if (announce) showToast("保存しました");
         try {
           window.localStorage.removeItem(draftKey(date));
         } catch {
@@ -94,9 +97,10 @@ export function EveningForm({
       } catch {
         // Keep the draft: it is the only remaining copy.
         setSaveState("error");
+        if (announce) showToast("保存に失敗しました", "error");
       }
     },
-    [date]
+    [date, showToast]
   );
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
@@ -141,13 +145,16 @@ export function EveningForm({
 
   function handleSave() {
     if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
     startTransition(() => {
-      void persist(latest.current);
+      void persist(latest.current, true);
     });
   }
 
   return (
     <div className="space-y-6">
+      <Toast toast={toast} />
+
       {recoverable != null && (
         <div className="space-y-2 rounded-xl border border-accent-yellow/40 bg-accent-yellow/10 p-3">
           <p className="text-xs text-text">

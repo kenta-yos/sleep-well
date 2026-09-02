@@ -7,6 +7,7 @@ import { TimeWheelPicker } from "@/components/wizard/wheel-picker";
 import { Stepper } from "@/components/wizard/stepper";
 import { SleepStageBar } from "@/components/wizard/sleep-stage-bar";
 import { Spinner } from "@/components/ui/spinner";
+import { Toast, useToast } from "@/components/ui/toast";
 import { formatMinutesAsHM, getDefaultTimes } from "@/lib/sleep-utils";
 
 interface InitialData {
@@ -63,6 +64,7 @@ export function MorningForm({
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { toast, showToast } = useToast();
 
   async function handleSave() {
     setSaving(true);
@@ -89,8 +91,14 @@ export function MorningForm({
 
       if (res.ok) {
         setSaved(true);
+        showToast("保存しました");
         router.refresh();
+      } else {
+        // Used to fail silently: the button just stopped spinning.
+        showToast("保存に失敗しました", "error");
       }
+    } catch {
+      showToast("保存に失敗しました", "error");
     } finally {
       setSaving(false);
     }
@@ -112,6 +120,8 @@ export function MorningForm({
 
   return (
     <div className="space-y-6">
+      <Toast toast={toast} />
+
       {/* Freshness */}
       <section className="space-y-2">
         <h3 className="text-sm font-medium text-text-muted">すっきり度</h3>
