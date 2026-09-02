@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getTodayJST, formatDateJP } from "@/lib/date-utils";
+import { getEffectiveToday, formatDateJP } from "@/lib/date-utils";
 import { getDailyLogByDate } from "@/lib/db/queries";
 import { DateNav } from "@/components/ui/date-nav";
 import { EveningForm } from "./evening-form";
@@ -10,7 +10,7 @@ export default async function EveningPage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date: dateParam } = await searchParams;
-  const today = getTodayJST();
+  const today = getEffectiveToday();
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
   const dailyLog = await getDailyLogByDate(date);
@@ -30,14 +30,14 @@ export default async function EveningPage({
       <div>
         <h1 className="text-xl font-bold">夜の記録</h1>
         <p className="text-sm text-text-muted">
-          {formatDateJP(date)}の日中のストレスや、寝る前の習慣を記録
+          {formatDateJP(date)}の日記と、ストレスや習慣を記録
         </p>
       </div>
 
       <DateNav date={date} today={today} />
 
       <p className="rounded-xl bg-surface px-3 py-2 text-xs text-text-muted">
-        0時を過ぎても寝る前なら、まだこの日の夜ログでOK
+        0時を過ぎても4時までは前日の夜ログとして開きます。書いた内容は自動で保存されます。
       </p>
 
       <EveningForm

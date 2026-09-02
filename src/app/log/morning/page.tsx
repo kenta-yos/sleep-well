@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getTodayJST, formatDateJP } from "@/lib/date-utils";
+import { getEffectiveToday, formatDateJP } from "@/lib/date-utils";
 import { getSleepRecordByDate, getDailyLogByDate } from "@/lib/db/queries";
 import { DateNav } from "@/components/ui/date-nav";
 import { MorningForm } from "./morning-form";
@@ -11,7 +11,7 @@ export default async function MorningPage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date: dateParam } = await searchParams;
-  const today = getTodayJST();
+  const today = getEffectiveToday();
   const date =
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
