@@ -38,7 +38,10 @@ export function HeartRateChart({ data }: { data: DataPoint[] }) {
   const avgAll =
     chartData.reduce((sum, d) => sum + (d.avg ?? 0), 0) / chartData.length;
 
-  const xInterval = Math.max(1, Math.ceil(chartData.length / 6) - 1);
+  // Aim for ~6 labels. The floor has to be 0, not 1: with a handful of
+  // points a floor of 1 always drops every other label, so two days of
+  // data showed only one date.
+  const xInterval = Math.max(0, Math.ceil(chartData.length / 6) - 1);
 
   return (
     <div className="space-y-2">
