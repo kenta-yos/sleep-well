@@ -104,7 +104,6 @@ export function TrendsClient({
       date,
       vitality: l?.tdmsVitality ?? null,
       stability: l?.tdmsStability ?? null,
-      freshness: l?.freshnessScore ?? undefined,
     };
   });
 
