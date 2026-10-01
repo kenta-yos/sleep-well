@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmojiPicker } from "@/components/log/emoji-picker";
-import { DigitInput } from "@/components/log/digit-input";
 import { SleepStageBar } from "@/components/wizard/sleep-stage-bar";
 import { Spinner } from "@/components/ui/spinner";
 import { Toast, useToast } from "@/components/ui/toast";
 import { getDefaultTimes } from "@/lib/sleep-utils";
+import {
+  type DigitKind,
+  formatDigitValue,
+  isDigitEntryComplete,
+  maxDigitsFor,
+  parseDigits,
+  toDigits,
+} from "@/lib/digit-entry";
 
 interface InitialData {
   freshnessScore: number | null;
@@ -19,6 +26,41 @@ interface InitialData {
   remMinutes: number | null;
   avgHeartRate: number | null;
 }
+
+interface Values {
+  freshnessScore: number | null;
+  totalSleepMinutes: number;
+  remMinutes: number;
+  lightMinutes: number;
+  deepMinutes: number;
+  bedtime: number;
+  wakeTime: number;
+  avgHeartRate: number;
+}
+
+type NumericKey = Exclude<keyof Values, "freshnessScore">;
+
+interface NumericStep {
+  key: NumericKey;
+  kind: DigitKind;
+  title: string;
+  example: string;
+  min: number;
+  max: number;
+}
+
+const NUMERIC_STEPS: NumericStep[] = [
+  { key: "totalSleepMinutes", kind: "duration", title: "総睡眠時間", example: "7時間50分 → 0750", min: 60, max: 720 },
+  { key: "remMinutes", kind: "duration", title: "REM睡眠", example: "1時間30分 → 0130", min: 0, max: 240 },
+  { key: "lightMinutes", kind: "duration", title: "浅い睡眠", example: "3時間30分 → 0330", min: 0, max: 480 },
+  { key: "deepMinutes", kind: "duration", title: "深い睡眠", example: "1時間05分 → 0105", min: 0, max: 300 },
+  { key: "bedtime", kind: "clock", title: "就寝時刻", example: "23時30分 → 2330", min: 0, max: 1439 },
+  { key: "wakeTime", kind: "clock", title: "起床時刻", example: "7時05分 → 0705", min: 0, max: 1439 },
+  { key: "avgHeartRate", kind: "count", title: "平均心拍数", example: "58 bpm → 58", min: 30, max: 120 },
+];
+
+// Step 0 is すっきり度, then one step per numeric field, then the summary.
+const CONFIRM_STEP = NUMERIC_STEPS.length + 1;
 
 /** "HH:MM" → minutes since midnight */
 function parseTime(t: string | null, fallback: string) {
@@ -32,6 +74,20 @@ function formatTime(minutes: number) {
   return `${h}:${m}`;
 }
 
+function initialValues(initialData: InitialData | null): Values {
+  const defaults = getDefaultTimes();
+  return {
+    freshnessScore: initialData?.freshnessScore ?? null,
+    totalSleepMinutes: initialData?.totalSleepMinutes ?? defaults.totalSleepMinutes,
+    remMinutes: initialData?.remMinutes ?? defaults.remMinutes,
+    lightMinutes: initialData?.lightMinutes ?? defaults.lightMinutes,
+    deepMinutes: initialData?.deepMinutes ?? defaults.deepMinutes,
+    bedtime: parseTime(initialData?.bedtime ?? null, defaults.bedtime),
+    wakeTime: parseTime(initialData?.wakeTime ?? null, defaults.wakeTime),
+    avgHeartRate: initialData?.avgHeartRate ?? defaults.avgHeartRate,
+  };
+}
+
 export function MorningForm({
   date,
   initialData,
@@ -40,61 +96,59 @@ export function MorningForm({
   initialData: InitialData | null;
 }) {
   const router = useRouter();
-  const defaults = getDefaultTimes();
+  const hasRecord = initialData?.totalSleepMinutes != null;
 
-  const initialBedtime = parseTime(initialData?.bedtime ?? null, defaults.bedtime);
-  const initialWakeTime = parseTime(initialData?.wakeTime ?? null, defaults.wakeTime);
-
-  const [freshnessScore, setFreshnessScore] = useState<number | null>(
-    initialData?.freshnessScore ?? null
-  );
-  const [bedtime, setBedtime] = useState(initialBedtime);
-  const [wakeTime, setWakeTime] = useState(initialWakeTime);
-  const [totalSleepMinutes, setTotalSleepMinutes] = useState(
-    initialData?.totalSleepMinutes ?? defaults.totalSleepMinutes
-  );
-  const [deepMinutes, setDeepMinutes] = useState(
-    initialData?.deepMinutes ?? defaults.deepMinutes
-  );
-  const [lightMinutes, setLightMinutes] = useState(
-    initialData?.lightMinutes ?? defaults.lightMinutes
-  );
-  const [remMinutes, setRemMinutes] = useState(
-    initialData?.remMinutes ?? defaults.remMinutes
-  );
-  const [avgHeartRate, setAvgHeartRate] = useState(
-    initialData?.avgHeartRate ?? defaults.avgHeartRate
-  );
+  const [values, setValues] = useState(() => initialValues(initialData));
+  // An existing record opens on the summary, since it is usually a fix-up.
+  const [step, setStep] = useState(hasRecord ? CONFIRM_STEP : 0);
+  const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const { toast, showToast } = useToast();
+  // One input stays mounted through every step: iOS only keeps the keyboard
+  // up when focus moves synchronously within a tap or keystroke, and a
+  // freshly mounted input cannot be focused that way.
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const numeric = step >= 1 && step < CONFIRM_STEP ? NUMERIC_STEPS[step - 1] : null;
+  const draftValue = numeric
+    ? parseDigits(numeric.kind, draft, numeric.min, numeric.max)
+    : null;
+  const invalid = draft !== "" && draftValue === null;
+
+  function goTo(next: number) {
+    setDraft("");
+    setStep(next);
+    if (next >= 1 && next < CONFIRM_STEP) inputRef.current?.focus();
+    else inputRef.current?.blur();
+  }
+
+  function commitAndNext(digits: string) {
+    if (numeric && digits !== "") {
+      const parsed = parseDigits(numeric.kind, digits, numeric.min, numeric.max);
+      if (parsed === null) return;
+      setValues((v) => ({ ...v, [numeric.key]: parsed }));
+    }
+    goTo(step + 1);
+  }
 
   async function handleSave() {
     setSaving(true);
-    setSaved(false);
     try {
       const res = await fetch("/api/sleep", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date,
-          bedtime: formatTime(bedtime),
-          wakeTime: formatTime(wakeTime),
-          totalSleepMinutes,
-          deepMinutes,
-          lightMinutes,
-          remMinutes,
-          avgHeartRate,
-          freshnessScore,
+          ...values,
+          bedtime: formatTime(values.bedtime),
+          wakeTime: formatTime(values.wakeTime),
         }),
       });
 
       if (res.ok) {
-        setSaved(true);
         showToast("保存しました");
         router.refresh();
       } else {
-        // Used to fail silently: the button just stopped spinning.
         showToast("保存に失敗しました", "error");
       }
     } catch {
@@ -105,136 +159,188 @@ export function MorningForm({
   }
 
   function handleClear() {
-    setFreshnessScore(initialData?.freshnessScore ?? null);
-    setBedtime(initialBedtime);
-    setWakeTime(initialWakeTime);
-    setTotalSleepMinutes(initialData?.totalSleepMinutes ?? defaults.totalSleepMinutes);
-    setDeepMinutes(initialData?.deepMinutes ?? defaults.deepMinutes);
-    setLightMinutes(initialData?.lightMinutes ?? defaults.lightMinutes);
-    setRemMinutes(initialData?.remMinutes ?? defaults.remMinutes);
-    setAvgHeartRate(initialData?.avgHeartRate ?? defaults.avgHeartRate);
-    setSaved(false);
+    setValues(initialValues(initialData));
+    goTo(hasRecord ? CONFIRM_STEP : 0);
   }
 
   return (
     <div className="space-y-6">
       <Toast toast={toast} />
 
-      {/* Freshness */}
-      <section className="space-y-2">
-        <h3 className="text-sm font-medium text-text-muted">すっきり度</h3>
-        <EmojiPicker value={freshnessScore} onChange={setFreshnessScore} />
-      </section>
+      {/* Progress */}
+      <div className="flex gap-1">
+        {Array.from({ length: CONFIRM_STEP + 1 }, (_, i) => (
+          <button
+            key={i}
+            type="button"
+            aria-label={`ステップ${i + 1}`}
+            onClick={() => goTo(i)}
+            className={`h-1.5 flex-1 rounded-full transition-colors ${
+              i <= step ? "bg-primary" : "bg-border"
+            }`}
+          />
+        ))}
+      </div>
 
-      <hr className="border-border" />
+      <div className="wizard-slide space-y-4" key={step}>
+        {step === 0 && (
+          <>
+            <h2 className="text-center text-lg font-bold">起きたときのすっきり度</h2>
+            <EmojiPicker
+              value={values.freshnessScore}
+              onChange={(score) => {
+                setValues((v) => ({ ...v, freshnessScore: score }));
+                goTo(1);
+              }}
+            />
+          </>
+        )}
 
-      {/* Total sleep */}
-      <section className="space-y-2">
-        <h3 className="text-sm font-medium text-text-muted">総睡眠時間</h3>
-        <DigitInput
-          kind="duration"
-          value={totalSleepMinutes}
-          onChange={setTotalSleepMinutes}
-          min={60}
-          max={720}
-          label="睡眠時間"
+        {numeric && (
+          <div className="text-center">
+            <h2 className="text-lg font-bold">{numeric.title}</h2>
+            <p className="text-sm text-text-muted">{numeric.example}</p>
+          </div>
+        )}
+
+        {step === CONFIRM_STEP && (
+          <>
+            <h2 className="text-center text-lg font-bold">確認</h2>
+            <SleepStageBar
+              deep={values.deepMinutes}
+              light={values.lightMinutes}
+              rem={values.remMinutes}
+            />
+            <ul className="divide-y divide-border rounded-2xl border border-border bg-surface">
+              <SummaryRow
+                label="すっきり度"
+                value={values.freshnessScore != null ? `${values.freshnessScore} / 5` : "未入力"}
+                onClick={() => goTo(0)}
+              />
+              {NUMERIC_STEPS.map((s, i) => (
+                <SummaryRow
+                  key={s.key}
+                  label={s.title}
+                  value={formatDigitValue(s.kind, values[s.key])}
+                  onClick={() => goTo(i + 1)}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+
+      {/* Kept mounted on every step so the keyboard survives step changes;
+          visually hidden outside the numeric steps. */}
+      <div className={numeric ? "space-y-2" : "sr-only"}>
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          enterKeyHint="next"
+          autoComplete="off"
+          aria-label={numeric?.title}
+          tabIndex={numeric ? 0 : -1}
+          maxLength={numeric ? maxDigitsFor(numeric.kind) : 4}
+          value={draft}
+          placeholder={numeric ? toDigits(numeric.kind, values[numeric.key]) : ""}
+          onChange={(e) => {
+            if (!numeric) return;
+            const digits = e.target.value
+              .replace(/\D/g, "")
+              .slice(0, maxDigitsFor(numeric.kind));
+            setDraft(digits);
+            if (isDigitEntryComplete(numeric.kind, digits, numeric.min, numeric.max)) {
+              commitAndNext(digits);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitAndNext(draft);
+            }
+          }}
+          className={`w-full rounded-2xl border-2 bg-surface py-4 text-center text-4xl font-bold tracking-[0.3em] tabular-nums text-text outline-none placeholder:text-text-muted/30 ${
+            invalid ? "border-accent-red" : "border-primary/40 focus:border-primary"
+          }`}
         />
-      </section>
+        {numeric && (
+          <p className={`text-center text-sm ${invalid ? "text-accent-red" : "text-text-muted"}`}>
+            {invalid
+              ? "この値は入力できません"
+              : formatDigitValue(numeric.kind, draftValue ?? values[numeric.key])}
+          </p>
+        )}
+      </div>
 
-      <hr className="border-border" />
+      {/* Navigation */}
+      <div className="flex gap-3">
+        {step > 0 && (
+          <button
+            type="button"
+            onClick={() => goTo(step - 1)}
+            className="flex-1 rounded-xl border border-border bg-surface py-3 font-medium text-text transition-colors hover:bg-surface-hover"
+          >
+            戻る
+          </button>
+        )}
+        {step < CONFIRM_STEP ? (
+          <button
+            type="button"
+            onClick={() => commitAndNext(draft)}
+            disabled={invalid}
+            className="flex-1 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-40"
+          >
+            {draft === "" && step > 0 ? "そのまま次へ" : "次へ"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-70"
+          >
+            {saving && <Spinner className="text-white" />}
+            {saving ? "保存中..." : "保存する"}
+          </button>
+        )}
+      </div>
 
-      {/* Sleep stages */}
-      <section className="space-y-3">
-        <h3 className="text-sm font-medium text-text-muted">睡眠ステージ</h3>
-        <SleepStageBar deep={deepMinutes} light={lightMinutes} rem={remMinutes} />
-        <div className="space-y-2">
-          <DigitInput
-            kind="duration"
-            value={remMinutes}
-            onChange={setRemMinutes}
-            min={0}
-            max={240}
-            label="REM睡眠"
-          />
-          <DigitInput
-            kind="duration"
-            value={lightMinutes}
-            onChange={setLightMinutes}
-            min={0}
-            max={480}
-            label="浅い睡眠"
-          />
-          <DigitInput
-            kind="duration"
-            value={deepMinutes}
-            onChange={setDeepMinutes}
-            min={0}
-            max={300}
-            label="深い睡眠"
-          />
+      {step === CONFIRM_STEP && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={handleClear}
+            className="text-xs text-text-muted underline"
+          >
+            朝ログを取り消す
+          </button>
         </div>
-      </section>
+      )}
+    </div>
+  );
+}
 
-      <hr className="border-border" />
-
-      {/* Bedtime / Wake time */}
-      <section className="space-y-2">
-        <h3 className="text-sm font-medium text-text-muted">就寝・起床時刻</h3>
-        <div className="space-y-2">
-          <DigitInput
-            kind="clock"
-            value={bedtime}
-            onChange={setBedtime}
-            label="就寝"
-          />
-          <DigitInput
-            kind="clock"
-            value={wakeTime}
-            onChange={setWakeTime}
-            label="起床"
-          />
-        </div>
-      </section>
-
-      <hr className="border-border" />
-
-      {/* Heart rate */}
-      <section className="space-y-2">
-        <h3 className="text-sm font-medium text-text-muted">平均心拍数</h3>
-        <DigitInput
-          kind="count"
-          value={avgHeartRate}
-          onChange={setAvgHeartRate}
-          min={30}
-          max={120}
-          label="平均心拍数"
-          unit="bpm"
-        />
-      </section>
-
-      {/* Save Button */}
+function SummaryRow({
+  label,
+  value,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  onClick: () => void;
+}) {
+  return (
+    <li>
       <button
         type="button"
-        onClick={handleSave}
-        disabled={saving}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-70"
+        onClick={onClick}
+        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-surface-hover"
       >
-        {saving && <Spinner className="text-white" />}
-        {saving ? "保存中..." : "保存する"}
+        <span className="text-sm text-text-muted">{label}</span>
+        <span className="font-bold tabular-nums text-text">{value}</span>
       </button>
-      {saved && !saving && (
-        <p className="text-center text-sm text-accent-green">保存しました</p>
-      )}
-
-      <div className="flex justify-center">
-        <button
-          type="button"
-          onClick={handleClear}
-          className="text-xs text-text-muted underline"
-        >
-          朝ログを取り消す
-        </button>
-      </div>
-    </div>
+    </li>
   );
 }
