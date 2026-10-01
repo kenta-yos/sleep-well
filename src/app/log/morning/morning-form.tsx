@@ -10,7 +10,6 @@ import { getDefaultTimes } from "@/lib/sleep-utils";
 import {
   type DigitKind,
   formatDigitValue,
-  isDigitEntryComplete,
   maxDigitsFor,
   parseDigits,
   toDigits,
@@ -105,8 +104,8 @@ export function MorningForm({
   const [saving, setSaving] = useState(false);
   const { toast, showToast } = useToast();
   // One input stays mounted through every step: iOS only keeps the keyboard
-  // up when focus moves synchronously within a tap or keystroke, and a
-  // freshly mounted input cannot be focused that way.
+  // up when focus moves synchronously within a tap, and a freshly mounted
+  // input cannot be focused that way.
   const inputRef = useRef<HTMLInputElement>(null);
 
   const numeric = step >= 1 && step < CONFIRM_STEP ? NUMERIC_STEPS[step - 1] : null;
@@ -250,10 +249,9 @@ export function MorningForm({
             const digits = e.target.value
               .replace(/\D/g, "")
               .slice(0, maxDigitsFor(numeric.kind));
+            // No auto-advance: the parsed value below has to be readable
+            // before moving on.
             setDraft(digits);
-            if (isDigitEntryComplete(numeric.kind, digits, numeric.min, numeric.max)) {
-              commitAndNext(digits);
-            }
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -266,7 +264,15 @@ export function MorningForm({
           }`}
         />
         {numeric && (
-          <p className={`text-center text-sm ${invalid ? "text-accent-red" : "text-text-muted"}`}>
+          <p
+            className={`text-center ${
+              invalid
+                ? "text-sm text-accent-red"
+                : draft === ""
+                  ? "text-sm text-text-muted"
+                  : "text-2xl font-bold text-primary"
+            }`}
+          >
             {invalid
               ? "この値は入力できません"
               : formatDigitValue(numeric.kind, draftValue ?? values[numeric.key])}

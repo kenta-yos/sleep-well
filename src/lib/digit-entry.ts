@@ -42,16 +42,3 @@ export function parseDigits(
   }
   return value >= min && value <= max ? value : null;
 }
-
-/** True once typing another digit could not lead anywhere useful. */
-export function isDigitEntryComplete(
-  kind: DigitKind,
-  digits: string,
-  min: number,
-  max: number
-) {
-  if (parseDigits(kind, digits, min, max) === null) return false;
-  if (digits.length >= maxDigitsFor(kind)) return true;
-  // A heart rate of "58" is done: "58x" would exceed the max.
-  return kind === "count" && Number(digits) * 10 > max;
-}
