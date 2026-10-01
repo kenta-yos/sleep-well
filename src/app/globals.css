@@ -42,15 +42,6 @@ body {
   }
 }
 
-/* Hide scrollbar for wheel picker */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
 /* Wizard step slide animation */
 .wizard-slide {
   animation: wizardFadeIn 0.2s ease-out;

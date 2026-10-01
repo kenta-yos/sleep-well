@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmojiPicker } from "@/components/log/emoji-picker";
-import { TimeWheelPicker } from "@/components/wizard/wheel-picker";
-import { Stepper } from "@/components/wizard/stepper";
+import { DigitInput } from "@/components/log/digit-input";
 import { SleepStageBar } from "@/components/wizard/sleep-stage-bar";
 import { Spinner } from "@/components/ui/spinner";
 import { Toast, useToast } from "@/components/ui/toast";
-import { formatMinutesAsHM, getDefaultTimes } from "@/lib/sleep-utils";
+import { getDefaultTimes } from "@/lib/sleep-utils";
 
 interface InitialData {
   freshnessScore: number | null;
@@ -21,10 +20,16 @@ interface InitialData {
   avgHeartRate: number | null;
 }
 
-function parseTime(t: string | null, defaultH: number, defaultM: number) {
-  if (!t) return { h: defaultH, m: defaultM };
-  const [h, m] = t.split(":").map(Number);
-  return { h, m: Math.round(m / 5) * 5 };
+/** "HH:MM" → minutes since midnight */
+function parseTime(t: string | null, fallback: string) {
+  const [h, m] = (t ?? fallback).split(":").map(Number);
+  return h * 60 + m;
+}
+
+function formatTime(minutes: number) {
+  const h = String(Math.floor(minutes / 60)).padStart(2, "0");
+  const m = String(minutes % 60).padStart(2, "0");
+  return `${h}:${m}`;
 }
 
 export function MorningForm({
@@ -37,16 +42,14 @@ export function MorningForm({
   const router = useRouter();
   const defaults = getDefaultTimes();
 
-  const bedParsed = parseTime(initialData?.bedtime ?? null, 23, 30);
-  const wakeParsed = parseTime(initialData?.wakeTime ?? null, 7, 0);
+  const initialBedtime = parseTime(initialData?.bedtime ?? null, defaults.bedtime);
+  const initialWakeTime = parseTime(initialData?.wakeTime ?? null, defaults.wakeTime);
 
   const [freshnessScore, setFreshnessScore] = useState<number | null>(
     initialData?.freshnessScore ?? null
   );
-  const [bedtimeH, setBedtimeH] = useState(bedParsed.h);
-  const [bedtimeM, setBedtimeM] = useState(bedParsed.m);
-  const [wakeH, setWakeH] = useState(wakeParsed.h);
-  const [wakeM, setWakeM] = useState(wakeParsed.m);
+  const [bedtime, setBedtime] = useState(initialBedtime);
+  const [wakeTime, setWakeTime] = useState(initialWakeTime);
   const [totalSleepMinutes, setTotalSleepMinutes] = useState(
     initialData?.totalSleepMinutes ?? defaults.totalSleepMinutes
   );
@@ -69,17 +72,14 @@ export function MorningForm({
   async function handleSave() {
     setSaving(true);
     setSaved(false);
-    const bedtime = `${String(bedtimeH).padStart(2, "0")}:${String(bedtimeM).padStart(2, "0")}`;
-    const wakeTime = `${String(wakeH).padStart(2, "0")}:${String(wakeM).padStart(2, "0")}`;
-
     try {
       const res = await fetch("/api/sleep", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date,
-          bedtime,
-          wakeTime,
+          bedtime: formatTime(bedtime),
+          wakeTime: formatTime(wakeTime),
           totalSleepMinutes,
           deepMinutes,
           lightMinutes,
@@ -106,10 +106,8 @@ export function MorningForm({
 
   function handleClear() {
     setFreshnessScore(initialData?.freshnessScore ?? null);
-    setBedtimeH(bedParsed.h);
-    setBedtimeM(bedParsed.m);
-    setWakeH(wakeParsed.h);
-    setWakeM(wakeParsed.m);
+    setBedtime(initialBedtime);
+    setWakeTime(initialWakeTime);
     setTotalSleepMinutes(initialData?.totalSleepMinutes ?? defaults.totalSleepMinutes);
     setDeepMinutes(initialData?.deepMinutes ?? defaults.deepMinutes);
     setLightMinutes(initialData?.lightMinutes ?? defaults.lightMinutes);
@@ -133,14 +131,13 @@ export function MorningForm({
       {/* Total sleep */}
       <section className="space-y-2">
         <h3 className="text-sm font-medium text-text-muted">総睡眠時間</h3>
-        <Stepper
+        <DigitInput
+          kind="duration"
           value={totalSleepMinutes}
           onChange={setTotalSleepMinutes}
           min={60}
           max={720}
-          step={5}
           label="睡眠時間"
-          formatValue={formatMinutesAsHM}
         />
       </section>
 
@@ -151,32 +148,29 @@ export function MorningForm({
         <h3 className="text-sm font-medium text-text-muted">睡眠ステージ</h3>
         <SleepStageBar deep={deepMinutes} light={lightMinutes} rem={remMinutes} />
         <div className="space-y-2">
-          <Stepper
+          <DigitInput
+            kind="duration"
             value={remMinutes}
             onChange={setRemMinutes}
             min={0}
             max={240}
-            step={5}
             label="REM睡眠"
-            formatValue={formatMinutesAsHM}
           />
-          <Stepper
+          <DigitInput
+            kind="duration"
             value={lightMinutes}
             onChange={setLightMinutes}
             min={0}
             max={480}
-            step={5}
             label="浅い睡眠"
-            formatValue={formatMinutesAsHM}
           />
-          <Stepper
+          <DigitInput
+            kind="duration"
             value={deepMinutes}
             onChange={setDeepMinutes}
             min={0}
             max={300}
-            step={5}
             label="深い睡眠"
-            formatValue={formatMinutesAsHM}
           />
         </div>
       </section>
@@ -186,19 +180,17 @@ export function MorningForm({
       {/* Bedtime / Wake time */}
       <section className="space-y-2">
         <h3 className="text-sm font-medium text-text-muted">就寝・起床時刻</h3>
-        <div className="flex justify-center gap-8">
-          <TimeWheelPicker
-            hours={bedtimeH}
-            minutes={bedtimeM}
-            onChangeHours={setBedtimeH}
-            onChangeMinutes={setBedtimeM}
+        <div className="space-y-2">
+          <DigitInput
+            kind="clock"
+            value={bedtime}
+            onChange={setBedtime}
             label="就寝"
           />
-          <TimeWheelPicker
-            hours={wakeH}
-            minutes={wakeM}
-            onChangeHours={setWakeH}
-            onChangeMinutes={setWakeM}
+          <DigitInput
+            kind="clock"
+            value={wakeTime}
+            onChange={setWakeTime}
             label="起床"
           />
         </div>
@@ -209,12 +201,12 @@ export function MorningForm({
       {/* Heart rate */}
       <section className="space-y-2">
         <h3 className="text-sm font-medium text-text-muted">平均心拍数</h3>
-        <Stepper
+        <DigitInput
+          kind="count"
           value={avgHeartRate}
           onChange={setAvgHeartRate}
           min={30}
           max={120}
-          step={1}
           label="平均心拍数"
           unit="bpm"
         />

@@ -61,17 +61,6 @@ export function formatMinutesAsHM(minutes: number): string {
   return `${h}h ${m}m`;
 }
 
-/** Clamp a value between min and max, snapping to step */
-export function clampStep(
-  value: number,
-  min: number,
-  max: number,
-  step: number
-): number {
-  const clamped = Math.min(max, Math.max(min, value));
-  return Math.round(clamped / step) * step;
-}
-
 /** Default bedtime/wake estimates based on date */
 export function getDefaultTimes() {
   return {
