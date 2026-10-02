@@ -119,4 +119,11 @@ export type TrendsLog = Pick<
   | "stressSources"
   | "tdmsVitality"
   | "tdmsStability"
+  | "exercise"
+  | "alcohol"
+  | "socializing"
+  | "bathing"
+  | "intenseFocus"
+  | "reading"
+  | "lateMeal"
 >;

@@ -45,7 +45,7 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium">睡眠時間 & すっきり度</h3>
+      <h3 className="text-sm font-medium">睡眠時間とすっきり度</h3>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ left: -20, right: 5 }}>
@@ -86,14 +86,14 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
                 );
               }}
             />
-            <Bar yAxisId="left" dataKey="deepH" stackId="sleep" fill="oklch(0.5 0.2 270)" radius={[0, 0, 0, 0]} />
-            <Bar yAxisId="left" dataKey="lightH" stackId="sleep" fill="oklch(0.7 0.12 250)" radius={[0, 0, 0, 0]} />
-            <Bar yAxisId="left" dataKey="remH" stackId="sleep" fill="oklch(0.65 0.18 300)" radius={[4, 4, 0, 0]} />
+            <Bar yAxisId="left" dataKey="deepH" stackId="sleep" fill="#4743b8" radius={[0, 0, 0, 0]} />
+            <Bar yAxisId="left" dataKey="lightH" stackId="sleep" fill="#6e95d8" radius={[0, 0, 0, 0]} />
+            <Bar yAxisId="left" dataKey="remH" stackId="sleep" fill="#a57be0" radius={[4, 4, 0, 0]} />
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="freshness"
-              stroke="oklch(0.72 0.17 155)"
+              stroke="#2e8b5a"
               strokeWidth={2}
               dot={{ r: 3 }}
               connectNulls

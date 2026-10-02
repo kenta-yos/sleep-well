@@ -48,6 +48,13 @@ export async function getTrendsData() {
       stressSources: dailyLogs.stressSources,
       tdmsVitality: dailyLogs.tdmsVitality,
       tdmsStability: dailyLogs.tdmsStability,
+      exercise: dailyLogs.exercise,
+      alcohol: dailyLogs.alcohol,
+      socializing: dailyLogs.socializing,
+      bathing: dailyLogs.bathing,
+      intenseFocus: dailyLogs.intenseFocus,
+      reading: dailyLogs.reading,
+      lateMeal: dailyLogs.lateMeal,
     })
     .from(dailyLogs)
     .orderBy(dailyLogs.date);
@@ -130,6 +137,31 @@ export async function getMonthlyData(year: number, month: number) {
     .orderBy(sleepRecords.date);
 
   return { sleep, logs };
+}
+
+/**
+ * Which days of a month have a morning and a night record, for the calendar.
+ * Unlike getMonthlyData this keeps each row on its own date: a day's page
+ * shows that date's morning and that date's night.
+ */
+export async function getCalendarMonth(from: string, to: string) {
+  const [sleep, logs] = await Promise.all([
+    db
+      .select({ date: sleepRecords.date })
+      .from(sleepRecords)
+      .where(and(gte(sleepRecords.date, from), sql`${sleepRecords.date} < ${to}`)),
+    db
+      .select({
+        date: dailyLogs.date,
+        night: sql<boolean>`(${dailyLogs.tdmsVitality} is not null or ${dailyLogs.panasPositive} is not null or ${dailyLogs.stressSources} is not null or coalesce(${dailyLogs.note}, '') <> '')`,
+      })
+      .from(dailyLogs)
+      .where(and(gte(dailyLogs.date, from), sql`${dailyLogs.date} < ${to}`)),
+  ]);
+  return {
+    morning: new Set(sleep.map((r) => r.date)),
+    night: new Set(logs.filter((l) => l.night).map((l) => l.date)),
+  };
 }
 
 // Monthly Goals

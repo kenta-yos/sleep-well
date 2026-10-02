@@ -1,44 +1,39 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { SleepDurationChart } from "@/components/charts/sleep-duration-chart";
 import { BedtimeChart } from "@/components/charts/bedtime-chart";
-import { StressHeatmap } from "@/components/charts/stress-heatmap";
+import { StressTrendChart } from "@/components/charts/stress-trend-chart";
 import { SleepStatsSummary } from "@/components/charts/sleep-stats-summary";
 import { HeartRateChart } from "@/components/charts/heart-rate-chart";
 import { AffectChart } from "@/components/charts/affect-chart";
+import { HabitFreshnessChart } from "@/components/charts/habit-freshness-chart";
 import { MonthlyOverview } from "@/components/charts/monthly-overview";
+import { HABITS, type HabitKey } from "@/components/log/habits";
 import type { TrendsSleep, TrendsLog } from "@/lib/db/schema";
 
-function generateDateRange(startDate: string, endDate: string): string[] {
-  const dates: string[] = [];
-  const [sy, sm, sd] = startDate.split("-").map(Number);
-  const [ey, em, ed] = endDate.split("-").map(Number);
-  const start = new Date(sy, sm - 1, sd);
-  const end = new Date(ey, em - 1, ed);
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    dates.push(`${y}-${m}-${day}`);
-  }
-  return dates;
+function jstDaysAgo(days: number): string {
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  jst.setUTCDate(jst.getUTCDate() - days);
+  return jst.toISOString().slice(0, 10);
 }
 
-function getTodayLocal(): string {
-  const now = new Date();
-  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  return jst.toISOString().split("T")[0];
+function dateRange(start: string, end: string): string[] {
+  const out: string[] = [];
+  const d = new Date(`${start}T00:00:00Z`);
+  const last = new Date(`${end}T00:00:00Z`);
+  for (; d <= last; d.setUTCDate(d.getUTCDate() + 1)) out.push(d.toISOString().slice(0, 10));
+  return out;
 }
 
-function getDaysAgo(days: number): string {
-  const now = new Date();
-  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  jst.setDate(jst.getDate() - days);
-  return jst.toISOString().split("T")[0];
-}
+const PERIODS = [
+  { id: "14", label: "2週間", days: 14 },
+  { id: "30", label: "1ヶ月", days: 30 },
+  { id: "90", label: "3ヶ月", days: 90 },
+  { id: "year", label: "1年（月ごと）", days: null },
+] as const;
 
-type Tab = "recent" | "longterm";
+type PeriodId = (typeof PERIODS)[number]["id"];
 
 export function TrendsClient({
   sleepRecords,
@@ -47,128 +42,137 @@ export function TrendsClient({
   sleepRecords: TrendsSleep[];
   dailyLogs: TrendsLog[];
 }) {
-  const [tab, setTab] = useState<Tab>("recent");
-  const days = 30;
+  const [period, setPeriod] = useState<PeriodId>("14");
+  const days = PERIODS.find((p) => p.id === period)!.days;
 
-  const sleepMap = useMemo(() => {
-    const map = new Map<string, TrendsSleep>();
-    for (const r of sleepRecords) map.set(r.date, r);
-    return map;
-  }, [sleepRecords]);
+  const sleepMap = useMemo(() => new Map(sleepRecords.map((r) => [r.date, r])), [sleepRecords]);
+  const logMap = useMemo(() => new Map(dailyLogs.map((l) => [l.date, l])), [dailyLogs]);
 
-  const logMap = useMemo(() => {
-    const map = new Map<string, TrendsLog>();
-    for (const l of dailyLogs) map.set(l.date, l);
-    return map;
-  }, [dailyLogs]);
-
-  const dateRange = useMemo(
-    () => generateDateRange(getDaysAgo(days), getTodayLocal()),
+  const range = useMemo(
+    () => (days ? dateRange(jstDaysAgo(days - 1), jstDaysAgo(0)) : []),
     [days]
   );
 
-  const durationData = dateRange.map((date) => {
-    const r = sleepMap.get(date);
-    return {
-      date,
-      deep: r?.deepMinutes ?? 0,
-      light: r?.lightMinutes ?? 0,
-      rem: r?.remMinutes ?? 0,
-      totalMinutes: r?.totalSleepMinutes ?? 0,
-      freshness: logMap.get(date)?.freshnessScore ?? undefined,
-    };
-  });
+  const chips = (
+    <div className="flex flex-wrap gap-1.5">
+      {PERIODS.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          aria-pressed={period === p.id}
+          onClick={() => setPeriod(p.id)}
+          className={`min-h-[36px] rounded-full px-3.5 text-xs transition-colors ${
+            period === p.id
+              ? "border border-primary bg-primary-soft font-bold text-text"
+              : "border border-border text-text-muted"
+          }`}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
 
-  const bedtimeData = dateRange.map((date) => {
-    const r = sleepMap.get(date);
-    return {
-      date,
-      bedtime: r?.bedtime ?? null,
-      wakeTime: r?.wakeTime ?? null,
-    };
-  });
+  if (!days) {
+    return (
+      <div className="space-y-4">
+        {chips}
+        <Card>
+          <SleepStatsSummary records={sleepRecords} />
+        </Card>
+        <MonthlyOverview sleepRecords={sleepRecords} dailyLogs={dailyLogs} />
+      </div>
+    );
+  }
 
-  const heartRateData = dateRange.map((date) => {
-    const r = sleepMap.get(date);
-    return {
-      date,
-      avgHR: r?.avgHeartRate ?? null,
-      minHR: r?.minHeartRate ?? null,
-      maxHR: r?.maxHeartRate ?? null,
-    };
-  });
-
-  const affectData = dateRange.map((date) => {
-    const l = logMap.get(date);
-    return {
-      date,
-      vitality: l?.tdmsVitality ?? null,
-      stability: l?.tdmsStability ?? null,
-    };
-  });
-
-  const stressData = dateRange.map((date) => {
-    const l = logMap.get(date);
-    return {
-      date,
-      stressSources: (l?.stressSources as Record<string, number> | null) ?? null,
-    };
-  });
-
-  const filteredSleep = useMemo(() => {
-    const cutoff = getDaysAgo(days);
-    return sleepRecords.filter((r) => r.date >= cutoff);
-  }, [sleepRecords, days]);
-
-  const filteredLogs = useMemo(() => {
-    const cutoff = getDaysAgo(days);
-    return dailyLogs.filter((l) => l.date >= cutoff);
-  }, [dailyLogs, days]);
+  const inRange = (date: string) => date >= range[0];
 
   return (
     <div className="space-y-4">
-      {/* Tab selector */}
-      <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
-        <button
-          onClick={() => setTab("recent")}
-          className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            tab === "recent"
-              ? "bg-primary text-white"
-              : "text-text-muted hover:text-text"
-          }`}
-        >
-          最近
-        </button>
-        <button
-          onClick={() => setTab("longterm")}
-          className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            tab === "longterm"
-              ? "bg-primary text-white"
-              : "text-text-muted hover:text-text"
-          }`}
-        >
-          長期
-        </button>
-      </div>
+      {chips}
 
-      {tab === "recent" ? (
-        <div className="space-y-6">
-          <SleepStatsSummary records={filteredSleep} />
-          <SleepDurationChart data={durationData} />
-          <BedtimeChart data={bedtimeData} />
-          <HeartRateChart data={heartRateData} />
-          <StressHeatmap data={stressData} />
-          <AffectChart data={affectData} />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <SleepStatsSummary records={sleepRecords} />
-          <MonthlyOverview
-            sleepRecords={sleepRecords}
-            dailyLogs={dailyLogs}
-          />
-        </div>
-      )}
+      <Card>
+        <SleepStatsSummary records={sleepRecords.filter((r) => inRange(r.date))} />
+      </Card>
+
+      <Card>
+        <SleepDurationChart
+          data={range.map((date) => {
+            const r = sleepMap.get(date);
+            return {
+              date,
+              deep: r?.deepMinutes ?? 0,
+              light: r?.lightMinutes ?? 0,
+              rem: r?.remMinutes ?? 0,
+              totalMinutes: r?.totalSleepMinutes ?? 0,
+              freshness: logMap.get(date)?.freshnessScore ?? undefined,
+            };
+          })}
+        />
+      </Card>
+
+      <Card>
+        <BedtimeChart
+          data={range.map((date) => {
+            const r = sleepMap.get(date);
+            return { date, bedtime: r?.bedtime ?? null, wakeTime: r?.wakeTime ?? null };
+          })}
+        />
+      </Card>
+
+      <Card>
+        <StressTrendChart
+          data={range.map((date) => ({
+            date,
+            stressSources:
+              (logMap.get(date)?.stressSources as Record<string, number> | null) ?? null,
+          }))}
+        />
+      </Card>
+
+      <Card>
+        <AffectChart
+          data={range.map((date) => {
+            const l = logMap.get(date);
+            return { date, vitality: l?.tdmsVitality ?? null, stability: l?.tdmsStability ?? null };
+          })}
+        />
+      </Card>
+
+      <Card>
+        <HeartRateChart
+          data={range.map((date) => {
+            const r = sleepMap.get(date);
+            return {
+              date,
+              avgHR: r?.avgHeartRate ?? null,
+              minHR: r?.minHeartRate ?? null,
+              maxHR: r?.maxHeartRate ?? null,
+            };
+          })}
+        />
+      </Card>
+
+      <Card>
+        <HabitFreshnessChart
+          nights={range.map((date) => {
+            const l = logMap.get(date);
+            const next = new Date(`${date}T00:00:00Z`);
+            next.setUTCDate(next.getUTCDate() + 1);
+            const nextLog = logMap.get(next.toISOString().slice(0, 10));
+            // A night counts once stress/habits were saved for it.
+            const habits =
+              l && l.stressSources != null
+                ? (Object.fromEntries(HABITS.map((h) => [h.key, !!l[h.key]])) as Record<HabitKey, boolean>)
+                : null;
+            return { habits, nextFreshness: nextLog?.freshnessScore ?? null };
+          })}
+        />
+      </Card>
     </div>
   );
+}
+
+function Card({ children }: { children: ReactNode }) {
+  return <section className="rounded-2xl bg-surface p-4">{children}</section>;
 }
