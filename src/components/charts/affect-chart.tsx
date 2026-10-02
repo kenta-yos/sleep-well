@@ -181,17 +181,17 @@ function Band({
 
             <XAxis
               dataKey="label"
-              tick={showXAxis ? { fontSize: 9, fill: "#888" } : false}
+              tick={showXAxis ? { fontSize: 9, fill: "#596178" } : false}
               interval={interval}
               height={showXAxis ? 18 : 4}
             />
             <YAxis
               domain={[-LIMIT, LIMIT]}
               ticks={[-LIMIT, 0, LIMIT]}
-              tick={{ fontSize: 9, fill: "#888" }}
+              tick={{ fontSize: 9, fill: "#596178" }}
               width={34}
             />
-            <ReferenceLine y={0} stroke="#666" />
+            <ReferenceLine y={0} stroke="#8a90a3" />
 
             {/* baseValue=0, otherwise Recharts fills down to the domain floor
                 and the colour split stops meaning anything. */}
@@ -213,7 +213,7 @@ function Band({
                 const d = payload[0].payload as Row;
                 const value = d[dataKey];
                 return (
-                  <div className="rounded-xl border border-border bg-[#1a1a2e] px-3 py-2 text-xs">
+                  <div className="rounded-xl border border-border bg-surface shadow-sm px-3 py-2 text-xs">
                     <p className="mb-1 text-text-muted">{d.label}</p>
                     <p
                       className="font-medium"

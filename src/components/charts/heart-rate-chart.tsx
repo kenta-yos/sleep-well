@@ -51,19 +51,19 @@ export function HeartRateChart({ data }: { data: DataPoint[] }) {
           <LineChart data={chartData} margin={{ left: -20, right: 5 }}>
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
               interval={xInterval}
             />
             <YAxis
               domain={[yMin, yMax]}
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
             />
             <Tooltip
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const d = payload[0].payload;
                 return (
-                  <div className="rounded-xl border border-[#333] bg-[#1a1a2e] px-3 py-2 text-xs">
+                  <div className="rounded-xl border border-border bg-surface shadow-sm px-3 py-2 text-xs">
                     <p className="text-text-muted">{d.label}</p>
                     <p className="font-medium" style={{ color: "oklch(0.65 0.2 25)" }}>
                       平均: {d.avg} bpm
@@ -80,14 +80,14 @@ export function HeartRateChart({ data }: { data: DataPoint[] }) {
             />
             <ReferenceLine
               y={Math.round(avgAll)}
-              stroke="#555"
+              stroke="#8a90a3"
               strokeDasharray="4 4"
               strokeWidth={1}
               label={{
                 value: `${Math.round(avgAll)}`,
                 position: "right",
                 fontSize: 9,
-                fill: "#888",
+                fill: "#596178",
               }}
             />
             <Line

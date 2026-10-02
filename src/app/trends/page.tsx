@@ -1,5 +1,6 @@
 import { TrendsClient } from "./trends-client";
 import { getTrendsData } from "@/lib/db/queries";
+import { ReviewTabs } from "@/components/layout/review-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,7 @@ export default async function TrendsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold">トレンド</h1>
+      <ReviewTabs />
       <TrendsClient sleepRecords={sleep} dailyLogs={logs} />
     </div>
   );

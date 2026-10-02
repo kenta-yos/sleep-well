@@ -328,10 +328,10 @@ function MiniChart({
           <LineChart data={data} margin={{ left: -20, right: 5, top: 5, bottom: 5 }}>
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
               domain={domain ?? ["auto", "auto"]}
             />
             <Tooltip
@@ -339,7 +339,7 @@ function MiniChart({
                 if (!active || !payload?.length) return null;
                 const d = payload[0];
                 return (
-                  <div className="rounded-xl border border-border bg-[#1a1a2e] px-3 py-2 text-xs">
+                  <div className="rounded-xl border border-border bg-surface shadow-sm px-3 py-2 text-xs">
                     <p className="text-text-muted">{d.payload.label}</p>
                     <p style={{ color }} className="font-medium">
                       {d.value != null ? `${d.value}${unit}` : "—"}
@@ -388,7 +388,7 @@ function MonthlyStressHeatmap({
 
   function cellStyle(val: number | null): React.CSSProperties {
     if (val == null || val === 0) {
-      return { background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" };
+      return { background: "#ffffff", border: "1px solid rgba(30,35,51,0.06)" };
     }
     if (val <= p25) return { background: "oklch(0.55 0.08 230 / 0.5)" };
     if (val <= p50) return { background: "oklch(0.60 0.13 230)" };
@@ -439,7 +439,7 @@ function MonthlyStressHeatmap({
       <div className="flex items-center gap-2 text-[10px] text-text-muted">
         <span>なし</span>
         <div className="flex gap-[2px]">
-          <div className="h-3 w-3 rounded-[3px]" style={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" }} />
+          <div className="h-3 w-3 rounded-[3px]" style={{ background: "#ffffff", border: "1px solid rgba(30,35,51,0.06)" }} />
           <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.55 0.08 230 / 0.5)" }} />
           <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.60 0.13 230)" }} />
           <div className="h-3 w-3 rounded-[3px]" style={{ background: "oklch(0.70 0.17 60)" }} />

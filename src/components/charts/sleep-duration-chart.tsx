@@ -51,20 +51,20 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
           <ComposedChart data={chartData} margin={{ left: -20, right: 5 }}>
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
               interval={xInterval}
             />
             <YAxis
               yAxisId="left"
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
               domain={[0, "auto"]}
-              label={{ value: "時間", angle: -90, position: "insideLeft", fontSize: 10, fill: "#888" }}
+              label={{ value: "時間", angle: -90, position: "insideLeft", fontSize: 10, fill: "#596178" }}
             />
             <YAxis
               yAxisId="right"
               orientation="right"
               domain={[0, 5]}
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
               hide
             />
             <Tooltip
@@ -73,7 +73,7 @@ export function SleepDurationChart({ data }: { data: DataPoint[] }) {
                 const d = payload[0].payload;
                 if (!d.totalMinutes && d.freshness == null) return null;
                 return (
-                  <div className="rounded-xl border border-[#333] bg-[#1a1a2e] px-3 py-2 text-xs">
+                  <div className="rounded-xl border border-border bg-surface shadow-sm px-3 py-2 text-xs">
                     <p className="text-text-muted">{d.label}</p>
                     {d.totalMinutes > 0 && (
                       <p className="font-medium text-primary">{formatMin(d.totalMinutes)}</p>

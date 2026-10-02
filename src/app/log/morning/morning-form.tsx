@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { EmojiPicker } from "@/components/log/emoji-picker";
 import { SleepStageBar } from "@/components/wizard/sleep-stage-bar";
 import { Spinner } from "@/components/ui/spinner";
 import { Toast, useToast } from "@/components/ui/toast";
@@ -56,6 +55,14 @@ const NUMERIC_STEPS: NumericStep[] = [
   { key: "bedtime", kind: "clock", title: "就寝時刻", example: "23時30分 → 2330", min: 0, max: 1439 },
   { key: "wakeTime", kind: "clock", title: "起床時刻", example: "7時05分 → 0705", min: 0, max: 1439 },
   { key: "avgHeartRate", kind: "count", title: "平均心拍数", example: "58 bpm → 58", min: 30, max: 120 },
+];
+
+const FRESHNESS = [
+  { score: 1, label: "最悪" },
+  { score: 2, label: "悪い" },
+  { score: 3, label: "普通" },
+  { score: 4, label: "良い" },
+  { score: 5, label: "最高" },
 ];
 
 // Step 0 is すっきり度, then one step per numeric field, then the summary.
@@ -145,7 +152,9 @@ export function MorningForm({
       });
 
       if (res.ok) {
-        showToast("保存しました");
+        // A fix-up came from that day's page, so return there; a fresh log
+        // goes back home, where the morning card has now cleared.
+        router.push(hasRecord ? `/log?date=${date}` : "/");
         router.refresh();
       } else {
         showToast("保存に失敗しました", "error");
@@ -185,13 +194,30 @@ export function MorningForm({
         {step === 0 && (
           <>
             <h2 className="text-center text-lg font-bold">起きたときのすっきり度</h2>
-            <EmojiPicker
-              value={values.freshnessScore}
-              onChange={(score) => {
-                setValues((v) => ({ ...v, freshnessScore: score }));
-                goTo(1);
-              }}
-            />
+            <div className="grid grid-cols-5 gap-1.5">
+              {FRESHNESS.map((f) => {
+                const selected = values.freshnessScore === f.score;
+                return (
+                  <button
+                    key={f.score}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setValues((v) => ({ ...v, freshnessScore: f.score }));
+                      goTo(1);
+                    }}
+                    className={`flex min-h-[56px] flex-col items-center justify-center rounded-xl text-[13px] transition-colors ${
+                      selected
+                        ? "border-2 border-primary bg-primary-soft font-bold text-text"
+                        : "border border-border bg-surface text-text-muted"
+                    }`}
+                  >
+                    <span className="text-[10px] tabular-nums opacity-70">{f.score}</span>
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
           </>
         )}
 

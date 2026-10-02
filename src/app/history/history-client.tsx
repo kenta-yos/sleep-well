@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { DiarySearch } from "@/components/log/diary-search";
 import { GoalsCard } from "@/components/log/monthly-goals";
+import { ReviewTabs } from "@/components/layout/review-tabs";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 const freshnessEmojis: Record<number, string> = {
@@ -119,6 +120,8 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs, goa
 
   return (
     <div className="space-y-4">
+      <ReviewTabs />
+
       <GoalsCard
         key={`${year}-${month}`}
         month={`${year}-${pad(month)}-01`}

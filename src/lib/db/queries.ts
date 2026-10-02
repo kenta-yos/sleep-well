@@ -12,18 +12,6 @@ export async function getSleepRecordByDate(date: string) {
   return record ?? null;
 }
 
-export async function getRecentSleepRecords(days: number) {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
-  const cutoffStr = cutoff.toISOString().split("T")[0];
-
-  return db
-    .select()
-    .from(sleepRecords)
-    .where(gte(sleepRecords.date, cutoffStr))
-    .orderBy(desc(sleepRecords.date));
-}
-
 // Daily Logs
 export async function getDailyLogByDate(date: string) {
   const [log] = await db
@@ -31,18 +19,6 @@ export async function getDailyLogByDate(date: string) {
     .from(dailyLogs)
     .where(eq(dailyLogs.date, date));
   return log ?? null;
-}
-
-export async function getRecentDailyLogs(days: number) {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
-  const cutoffStr = cutoff.toISOString().split("T")[0];
-
-  return db
-    .select()
-    .from(dailyLogs)
-    .where(gte(dailyLogs.date, cutoffStr))
-    .orderBy(desc(dailyLogs.date));
 }
 
 // Combined data for trends

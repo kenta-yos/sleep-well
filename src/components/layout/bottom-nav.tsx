@@ -1,50 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
-const navItems = [
-  { href: "/", label: "ホーム", icon: HomeIcon },
-  { href: "/log", label: "ログ", icon: PenIcon },
-  { href: "/trends", label: "トレンド", icon: ChartIcon },
-  { href: "/review", label: "サマリー", icon: SummaryIcon },
-] as const;
+/** Check-ins are focused flows with their own back and close buttons. */
+const CHECKIN_PATHS = ["/log/morning", "/log/mood", "/log/stress", "/log/evening"];
+
+/** Everything under ふりかえり: the calendar, a day's page, graphs and the monthly summary. */
+function isReview(pathname: string) {
+  return (
+    pathname === "/log" ||
+    pathname.startsWith("/trends") ||
+    pathname.startsWith("/review") ||
+    pathname.startsWith("/history")
+  );
+}
 
 export function BottomNav() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const dateParam = searchParams.get("date");
 
   if (pathname === "/login") return null;
+  if (CHECKIN_PATHS.some((p) => pathname.startsWith(p))) return null;
 
-  function getHref(href: string) {
-    if (href === "/" && dateParam) {
-      return `/?date=${dateParam}`;
-    }
-    return href;
-  }
+  const items = [
+    { href: "/", label: "ホーム", icon: HomeIcon, active: pathname === "/" },
+    { href: "/log", label: "ふりかえり", icon: CalendarIcon, active: isReview(pathname) },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-surface/95 backdrop-blur-md">
-      <div className="mx-auto flex max-w-lg items-center justify-around pb-[env(safe-area-inset-bottom)]">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const isActive =
-            href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={getHref(href)}
-              className={`flex min-h-[48px] min-w-[48px] flex-col items-center justify-center gap-0.5 px-3 py-2 text-xs transition-colors ${
-                isActive ? "text-primary" : "text-text-muted"
-              }`}
-            >
-              <Icon className="h-5 w-5" />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
+      <div className="mx-auto grid max-w-lg grid-cols-2 pb-[env(safe-area-inset-bottom)]">
+        {items.map(({ href, label, icon: Icon, active }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 py-2 text-[11px] transition-colors ${
+              active ? "text-primary" : "text-text-muted"
+            }`}
+          >
+            <Icon className="h-[22px] w-[22px]" />
+            <span>{label}</span>
+          </Link>
+        ))}
       </div>
     </nav>
   );
@@ -52,32 +49,17 @@ export function BottomNav() {
 
 function HomeIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" />
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11 12 4l9 7v9H3z" />
     </svg>
   );
 }
 
-function PenIcon({ className }: { className?: string }) {
+function CalendarIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-    </svg>
-  );
-}
-
-function ChartIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-  );
-}
-
-function SummaryIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
     </svg>
   );
 }

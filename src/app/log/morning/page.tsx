@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getEffectiveToday, formatDateJP } from "@/lib/date-utils";
 import { getSleepRecordByDate, getDailyLogByDate } from "@/lib/db/queries";
-import { DateNav } from "@/components/ui/date-nav";
 import { MorningForm } from "./morning-form";
 import { timestampToTime } from "@/lib/sleep-utils";
 
@@ -11,9 +10,8 @@ export default async function MorningPage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date: dateParam } = await searchParams;
-  const today = getEffectiveToday();
   const date =
-    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : getEffectiveToday();
 
   const [sleepRecord, dailyLog] = await Promise.all([
     getSleepRecordByDate(date),
@@ -33,24 +31,23 @@ export default async function MorningPage({
 
   return (
     <div className="space-y-4">
-      <Link
-        href={`/log?date=${date}`}
-        className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary"
-      >
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+      <div className="flex items-center gap-2">
+        <Link
+          href={sleepRecord ? `/log?date=${date}` : "/"}
+          aria-label="閉じる"
+          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl text-text-muted hover:bg-surface"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </Link>
+        <svg className="h-5 w-5 text-sky" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
         </svg>
-        一覧に戻る
-      </Link>
-
-      <div>
-        <h1 className="text-xl font-bold">朝の記録</h1>
-        <p className="text-sm text-text-muted">
-          {formatDateJP(date)}の睡眠データを入力
-        </p>
+        <h1 className="text-sm font-bold">朝のチェックイン</h1>
+        <span className="ml-auto text-xs text-text-muted">{formatDateJP(date)}</span>
       </div>
-
-      <DateNav date={date} today={today} />
 
       <MorningForm key={date} date={date} initialData={initialData} />
     </div>

@@ -4,21 +4,8 @@ import { db } from "@/lib/db";
 import { dailyLogs, monthlyGoals } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 
-export async function saveFreshnessScore(date: string, score: number) {
-  await db
-    .insert(dailyLogs)
-    .values({ date, freshnessScore: score })
-    .onConflictDoUpdate({
-      target: dailyLogs.date,
-      set: {
-        freshnessScore: sql`excluded.freshness_score`,
-        updatedAt: sql`now()`,
-      },
-    });
-  return { ok: true };
-}
-
-export async function saveEveningLog(
+/** Night check-in step 2. Saving `{}` records "no stress today". */
+export async function saveStressHabits(
   date: string,
   data: {
     stressSources: Record<string, number>;
@@ -29,23 +16,11 @@ export async function saveEveningLog(
     intenseFocus: boolean;
     reading: boolean;
     lateMeal: boolean;
-    note: string;
   }
 ) {
   await db
     .insert(dailyLogs)
-    .values({
-      date,
-      stressSources: data.stressSources,
-      alcohol: data.alcohol,
-      exercise: data.exercise,
-      socializing: data.socializing,
-      bathing: data.bathing,
-      intenseFocus: data.intenseFocus,
-      reading: data.reading,
-      lateMeal: data.lateMeal,
-      note: data.note || null,
-    })
+    .values({ date, ...data })
     .onConflictDoUpdate({
       target: dailyLogs.date,
       set: {
@@ -57,18 +32,21 @@ export async function saveEveningLog(
         intenseFocus: sql`excluded.intense_focus`,
         reading: sql`excluded.reading`,
         lateMeal: sql`excluded.late_meal`,
-        note: sql`excluded.note`,
         updatedAt: sql`now()`,
       },
     });
   return { ok: true };
 }
 
-export async function clearFreshnessScore(date: string) {
+/** Night check-in step 3. Touches only the diary, so it cannot undo step 2. */
+export async function saveDiary(date: string, note: string) {
   await db
-    .update(dailyLogs)
-    .set({ freshnessScore: null, updatedAt: new Date() })
-    .where(eq(dailyLogs.date, date));
+    .insert(dailyLogs)
+    .values({ date, note: note || null })
+    .onConflictDoUpdate({
+      target: dailyLogs.date,
+      set: { note: sql`excluded.note`, updatedAt: sql`now()` },
+    });
   return { ok: true };
 }
 

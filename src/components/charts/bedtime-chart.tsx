@@ -85,11 +85,11 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
           <AreaChart data={chartData} margin={{ left: -10, right: 5 }}>
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
               interval={xInterval}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "#888" }}
+              tick={{ fontSize: 10, fill: "#596178" }}
               domain={[
                 (dataMin: number) => Math.min(dataMin, AXIS_MIN) - 30,
                 (dataMax: number) => Math.max(dataMax, AXIS_MAX) + 30,
@@ -103,7 +103,7 @@ export function BedtimeChart({ data }: { data: DataPoint[] }) {
                 if (!active || !payload?.length) return null;
                 const d = payload[0].payload;
                 return (
-                  <div className="rounded-xl border border-[#333] bg-[#1a1a2e] px-3 py-2 text-xs">
+                  <div className="rounded-xl border border-border bg-surface shadow-sm px-3 py-2 text-xs">
                     <p className="text-text-muted">{d.label}</p>
                     <p>就寝: {nightMinutesToTime(d.bedNM)}</p>
                     <p>起床: {nightMinutesToTime(d.wakeNM)}</p>

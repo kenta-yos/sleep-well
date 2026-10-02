@@ -18,7 +18,7 @@ const categories: { id: string; label: string }[] = [
 // 0 = no data, 1..4 = score 0..3
 function cellStyle(score: number | null): React.CSSProperties {
   if (score == null || score === 0) {
-    return { background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.08)" };
+    return { background: "#ffffff", border: "1px solid rgba(30,35,51,0.06)" };
   }
   if (score === 1) return { background: "oklch(0.60 0.13 230)" }; // blue
   if (score === 2) return { background: "oklch(0.70 0.17 60)" };  // amber
