@@ -74,7 +74,7 @@ interface MonthData {
   bedtimeMedian: number | null;
   wakeMedian: number | null;
   hrMedian: number | null;
-  freshnessMedian: number | null;
+  freshnessAvg: number | null;
   stressAvg: number | null;
   /** TDMS 快適度 = 活性度 + 安定度（2026-09〜）。 */
   tdmsPleasure: number | null;
@@ -166,7 +166,7 @@ export function MonthlyOverview({
       bedtimeMedian: median(bedtimes),
       wakeMedian: median(wakes),
       hrMedian: median(hrs),
-      freshnessMedian: median(freshness),
+      freshnessAvg: avg(freshness),
       stressAvg: avg(stressTotals),
       tdmsPleasure: avg(tdmsPleasures),
       pssScore: pssByMonth.get(key) ?? null,
@@ -179,7 +179,7 @@ export function MonthlyOverview({
     label: m.label,
     sleep: m.sleepMedian != null ? +(m.sleepMedian / 60).toFixed(1) : null,
     hr: m.hrMedian != null ? Math.round(m.hrMedian) : null,
-    freshness: m.freshnessMedian != null ? +m.freshnessMedian.toFixed(1) : null,
+    freshness: m.freshnessAvg != null ? +m.freshnessAvg.toFixed(1) : null,
     stress: m.stressAvg != null ? +m.stressAvg.toFixed(1) : null,
     pleasure: m.tdmsPleasure != null ? +m.tdmsPleasure.toFixed(1) : null,
     pss: m.pssScore != null ? Math.round(m.pssScore) : null,
@@ -220,7 +220,7 @@ export function MonthlyOverview({
           unit="bpm"
         />
         <MiniChart
-          title="すっきり度（中央値）"
+          title="すっきり度（平均）"
           data={chartData}
           dataKey="freshness"
           color="oklch(0.72 0.17 155)"
@@ -293,8 +293,8 @@ export function MonthlyOverview({
                 />
                 <Metric
                   label="すっきり"
-                  value={m.freshnessMedian ? `${m.freshnessMedian.toFixed(1)}` : "—"}
-                  diff={diffArrow(m.freshnessMedian, prev?.freshnessMedian ?? null, true)}
+                  value={m.freshnessAvg ? `${m.freshnessAvg.toFixed(1)}` : "—"}
+                  diff={diffArrow(m.freshnessAvg, prev?.freshnessAvg ?? null, true)}
                 />
                 <Metric
                   label="ストレス"
