@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { DiarySearch } from "@/components/log/diary-search";
+import { GoalsCard } from "@/components/log/monthly-goals";
 import type { SleepRecord, DailyLog } from "@/lib/db/schema";
 
 const freshnessEmojis: Record<number, string> = {
@@ -63,9 +64,10 @@ interface Props {
   today: string;
   sleepRecords: SleepRecord[];
   dailyLogs: DailyLog[];
+  goals: string[];
 }
 
-export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: Props) {
+export function HistoryClient({ year, month, today, sleepRecords, dailyLogs, goals }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -117,6 +119,13 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
 
   return (
     <div className="space-y-4">
+      <GoalsCard
+        key={`${year}-${month}`}
+        month={`${year}-${pad(month)}-01`}
+        label={`${month}月の目標`}
+        initialGoals={goals}
+      />
+
       <DiarySearch />
 
       {/* Month Selector */}
@@ -163,11 +172,6 @@ export function HistoryClient({ year, month, today, sleepRecords, dailyLogs }: P
           </svg>
         </button>
       </div>
-
-      {/* Legend */}
-      <p className="text-center text-[11px] text-text-muted">
-        夜ログ + 翌朝ログ のペア表示
-      </p>
 
       {/* List */}
       <div className="space-y-2">

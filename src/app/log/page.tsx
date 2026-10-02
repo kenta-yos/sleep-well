@@ -4,6 +4,7 @@ import {
   getSleepRecordByDate,
   getDailyLogByDate,
   getMonthlyData,
+  getMonthlyGoals,
 } from "@/lib/db/queries";
 import { DateNav } from "@/components/ui/date-nav";
 import { SleepSummaryCard } from "@/components/log/sleep-summary-card";
@@ -63,7 +64,10 @@ export default async function LogPage({
     month = m;
   }
 
-  const { sleep, logs } = await getMonthlyData(year, month);
+  const [{ sleep, logs }, goals] = await Promise.all([
+    getMonthlyData(year, month),
+    getMonthlyGoals(`${year}-${String(month).padStart(2, "0")}-01`),
+  ]);
 
   return (
     <HistoryClient
@@ -72,6 +76,7 @@ export default async function LogPage({
       today={today}
       sleepRecords={sleep}
       dailyLogs={logs}
+      goals={goals}
     />
   );
 }
