@@ -104,44 +104,36 @@ export function GoalsCard({
   const [editing, setEditing] = useState(false);
   const shown = goals.map((g) => g.trim()).filter(Boolean);
 
+  function finish() {
+    void save(goals);
+    setGoals(shown);
+    setEditing(false);
+  }
+
   if (!editing && shown.length === 0) {
     return (
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="text-xs text-text-muted underline"
+        className="w-full rounded-xl border border-dashed border-border px-3 py-3 text-left text-xs text-text-muted hover:bg-surface"
       >
         🎯 {label}を追加
       </button>
     );
   }
 
-  return (
-    <div className="rounded-xl border border-border bg-surface px-3 py-2">
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] text-text-muted">🎯 {label}</p>
-        <span className="flex items-center gap-2">
-          {editing && <SaveStatus state={state} />}
-          <button
-            type="button"
-            onClick={() => {
-              if (editing) {
-                void save(goals);
-                setGoals(shown);
-              }
-              setEditing(!editing);
-            }}
-            className="text-[11px] text-primary"
-          >
-            {editing ? "完了" : "編集"}
-          </button>
+  if (!editing) {
+    // The whole card is the edit target: small text links were too hard to hit.
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-left hover:bg-surface-hover"
+      >
+        <span className="flex items-center justify-between">
+          <span className="text-[11px] text-text-muted">🎯 {label}</span>
+          <span className="text-[11px] text-text-muted">タップで編集</span>
         </span>
-      </div>
-      {editing ? (
-        <div className="mt-2 pb-1">
-          <GoalInputs goals={goals} setGoals={setGoals} save={save} />
-        </div>
-      ) : (
         <ul className="mt-1 space-y-0.5">
           {shown.map((g, i) => (
             <li key={i} className="text-xs leading-relaxed text-text">
@@ -149,7 +141,24 @@ export function GoalsCard({
             </li>
           ))}
         </ul>
-      )}
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl border border-primary/40 bg-surface p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-text-muted">🎯 {label}</p>
+        <SaveStatus state={state} />
+      </div>
+      <GoalInputs goals={goals} setGoals={setGoals} save={save} />
+      <button
+        type="button"
+        onClick={finish}
+        className="w-full rounded-xl bg-primary py-2.5 text-sm font-medium text-white hover:bg-primary-hover"
+      >
+        完了
+      </button>
     </div>
   );
 }
