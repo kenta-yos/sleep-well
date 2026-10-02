@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "/log", label: "カレンダー" },
   { href: "/trends", label: "グラフ" },
+  { href: "/log", label: "カレンダー" },
   { href: "/review", label: "月のまとめ" },
 ];
 

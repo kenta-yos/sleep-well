@@ -24,7 +24,7 @@ export function BottomNav() {
 
   const items = [
     { href: "/", label: "ホーム", icon: HomeIcon, active: pathname === "/" },
-    { href: "/log", label: "ふりかえり", icon: CalendarIcon, active: isReview(pathname) },
+    { href: "/trends", label: "ふりかえり", icon: CalendarIcon, active: isReview(pathname) },
   ];
 
   return (
