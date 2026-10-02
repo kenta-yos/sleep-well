@@ -20,11 +20,11 @@ export default async function EveningPage({
   const today = getEffectiveToday();
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
-  // Goals for next month are set during the month's last week. The first
+  // Goals for next month are set during the month's last three days. The first
   // week also opens this month's goals, for a month-end that slipped by.
   const thisMonth = monthStart(date);
   const editMonth =
-    daysLeftInMonth(date) < 7
+    daysLeftInMonth(date) < 3
       ? nextMonthStart(date)
       : Number(date.slice(8)) <= 7
         ? thisMonth
