@@ -20,20 +20,15 @@ export default async function EveningPage({
   const today = getEffectiveToday();
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
-  // Goals for next month are set during the month's last three days. The first
-  // week also opens this month's goals, for a month-end that slipped by.
+  // This month's goals can be edited from their card at any time; next
+  // month's are offered at the bottom during the month's last three days.
   const thisMonth = monthStart(date);
-  const editMonth =
-    daysLeftInMonth(date) < 3
-      ? nextMonthStart(date)
-      : Number(date.slice(8)) <= 7
-        ? thisMonth
-        : null;
+  const nextMonth = daysLeftInMonth(date) < 3 ? nextMonthStart(date) : null;
 
-  const [dailyLog, goals, editGoals] = await Promise.all([
+  const [dailyLog, goals, nextGoals] = await Promise.all([
     getDailyLogByDate(date),
     getMonthlyGoals(thisMonth),
-    editMonth && editMonth !== thisMonth ? getMonthlyGoals(editMonth) : null,
+    nextMonth ? getMonthlyGoals(nextMonth) : null,
   ]);
 
   const monthLabel = (m: string) => `${Number(m.slice(5, 7))}月`;
@@ -63,7 +58,12 @@ export default async function EveningPage({
         0時を過ぎても4時までは前日の夜ログとして開きます。書いた内容は自動で保存されます。
       </p>
 
-      <GoalsCard label={`${monthLabel(thisMonth)}の目標`} goals={goals} />
+      <GoalsCard
+        key={thisMonth}
+        month={thisMonth}
+        label={`${monthLabel(thisMonth)}の目標`}
+        initialGoals={goals}
+      />
 
       <EveningForm
         key={date}
@@ -84,20 +84,11 @@ export default async function EveningPage({
             : null
         }
         extra={
-          editMonth && (
+          nextMonth && (
             <GoalsEditor
-              month={editMonth}
-              title={
-                editMonth === thisMonth
-                  ? `今月（${monthLabel(editMonth)}）の目標`
-                  : `来月（${monthLabel(editMonth)}）の目標`
-              }
-              hint={
-                editMonth === thisMonth
-                  ? "月初の1週間は今月の目標を見直せます。"
-                  : "来月の目標をいくつか決めておきましょう。来月の夜ログに毎日表示されます。"
-              }
-              initialGoals={editGoals ?? goals}
+              month={nextMonth}
+              title={`来月（${monthLabel(nextMonth)}）の目標`}
+              initialGoals={nextGoals ?? []}
             />
           )
         }

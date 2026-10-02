@@ -7,6 +7,7 @@ import {
   getMonthlyData,
   getMonthlyInsight,
   getPreviousMonthlyInsights,
+  getMonthlyGoals,
 } from "@/lib/db/queries";
 import { generateMonthlySummary, createSummaryStream } from "@/lib/ai";
 
@@ -51,8 +52,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const previousSummaries = await getPreviousMonthlyInsights(year, month);
-    const prompt = generateMonthlySummary(sleep, logs, year, month, previousSummaries);
+    const [previousSummaries, goals] = await Promise.all([
+      getPreviousMonthlyInsights(year, month),
+      getMonthlyGoals(`${year}-${String(month).padStart(2, "0")}-01`),
+    ]);
+    const prompt = generateMonthlySummary(sleep, logs, year, month, previousSummaries, goals);
 
     const stream = createSummaryStream(prompt);
     let fullContent = "";

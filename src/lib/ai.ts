@@ -89,7 +89,8 @@ export function generateMonthlySummary(
   dailyLogs: DailyLog[],
   year: number,
   month: number,
-  previousSummaries?: { date: string; content: string }[]
+  previousSummaries?: { date: string; content: string }[],
+  goals: string[] = []
 ): string {
   const prevContext =
     previousSummaries && previousSummaries.length > 0
@@ -120,11 +121,19 @@ ${prevContext}## 構成（この順番で書いてください）
 - panasPositive / panasNegative（各 5-25）: 2026年9月より前。回答が低い側に偏っており、変動はほとんど情報を持たない。数値の細かい上下を根拠にした解釈はしないこと。
 - pssScore（0-40）: 2026年9月に測定終了。データがある月のみ言及。
 3. **${month}月のまとめ** — どんな1ヶ月だったかを日記ベースで詳しくまとめる。仕事、人間関係、プライベートの活動、心境の変化、印象的なエピソードなど、振り返りとして読み応えのある内容にする。${previousSummaries && previousSummaries.length > 0 ? "過去からの変化や成長にも触れる。" : ""}
+${
+  goals.length > 0
+    ? `4. **目標の振り返り** — 下の「${month}月の目標」それぞれについて、達成度を「達成 / 一部達成 / 未達 / データから判断できない」のいずれかで示し、根拠を日記・習慣・睡眠データから具体的に挙げる。データに表れていないことを推測で達成扱いにしないこと。最後に、来月に活かせることを一言添える。
 
+## ${month}月の目標（本人が立てたもの）
+${goals.map((g) => `- ${g}`).join("\n")}
+`
+    : ""
+}
 ${buildDataBlock(sleepRecords, dailyLogs)}
 
 ${TONE_INSTRUCTION}
-- 800-1200字程度で、まとめパートは特に厚めに書く`;
+- ${goals.length > 0 ? "1000-1500字" : "800-1200字"}程度で、まとめパートは特に厚めに書く`;
 
   return prompt;
 }
@@ -132,7 +141,7 @@ ${TONE_INSTRUCTION}
 export function createSummaryStream(prompt: string) {
   return client.messages.stream({
     model: "claude-sonnet-4-6",
-    max_tokens: 3000,
+    max_tokens: 4000,
     messages: [{ role: "user", content: prompt }],
   });
 }
