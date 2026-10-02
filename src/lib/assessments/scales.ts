@@ -3,7 +3,7 @@
 // 心理尺度の定義＋採点（フレームワーク非依存・サーバー/クライアント共用）
 //
 //   毎晩 : TDMS（二次元気分尺度・8項目）
-//   ※ I-PANAS-SF / PANAS-20 / PSS-10 は過去データの読み取り用に残してある（下部）
+//   ※ I-PANAS-SF / PANAS-20 は過去データの読み取り用に残してある（下部）
 //
 // 出典:
 //   TDMS       : 坂入洋右・徳田英次・川原正人・谷木龍男・征矢英昭 (2003)
@@ -13,7 +13,6 @@
 //                Research 55(4), 338-349
 //   I-PANAS-SF : Thompson (2007)
 //   PANAS      : Watson, Clark & Tellegen (1988) / 日本語版 cf. 佐藤・安田 (2001)
-//   PSS-10     : Cohen, Kamarck & Mermelstein (1983) / 日本語版 cf. Mimura & Griffiths (2004)
 //
 // 2026-09 に毎晩の尺度を I-PANAS-SF から TDMS へ移行。理由は本文コメント参照。
 // -------------------------------------------------------------------
@@ -185,33 +184,6 @@ export const IPANAS_ITEMS: PanasItem[] = [
   { id: "sf_afraid", word: "怖かった", type: "NA" },
   { id: "sf_active", word: "活気があった", type: "PA" },
 ];
-
-// ===================================================================
-//  PSS-10（〜2026-09 の月次尺度・過去データ表示用）
-//
-//  入力は 2026-09 に終了。半年で3回しか実施されず、得点は 10 / 9 / 11 と
-//  ほぼ動かなかった。項目バンクと採点は消し、過去の得点を表示するための
-//  区分ラベルだけ残す。列とデータはそのまま保持している。
-//  出典: Cohen, Kamarck & Mermelstein (1983) / 日本語版 cf. Mimura & Griffiths (2004)
-// ===================================================================
-export type PssBand = "low" | "moderate" | "high";
-
-/** 目安（厳密な臨床カットオフではない）: 0-13低 / 14-26中 / 27-40高 */
-export function pssBand(score: number): PssBand {
-  if (score <= 13) return "low";
-  if (score <= 26) return "moderate";
-  return "high";
-}
-
-const PSS_BAND_LABEL: Record<PssBand, string> = {
-  low: "低め",
-  moderate: "中程度",
-  high: "高め",
-};
-
-export function pssBandLabel(score: number): string {
-  return PSS_BAND_LABEL[pssBand(score)];
-}
 
 // ===================================================================
 //  （任意）フル版 PANAS-20 — 使う場合は scorePanas(answers, PANAS20_ITEMS)

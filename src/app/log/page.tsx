@@ -220,16 +220,6 @@ async function LogSummaryView({
                 覚醒度: {signed(dailyLog.tdmsVitality - dailyLog.tdmsStability)}
               </span>
             </div>
-            {dailyLog.pssScore != null && (
-              <p className="text-sm text-text-muted">
-                PSS-10: {dailyLog.pssScore}/40・
-                {dailyLog.pssScore <= 13
-                  ? "低め"
-                  : dailyLog.pssScore <= 26
-                    ? "中程度"
-                    : "高め"}
-              </p>
-            )}
           </div>
         ) : dailyLog?.panasPositive != null ? (
           <div className="space-y-1">

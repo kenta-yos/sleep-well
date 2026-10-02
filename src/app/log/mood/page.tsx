@@ -55,7 +55,6 @@ export default async function MoodPage({
         }
         savedVitality={dailyLog?.tdmsVitality ?? null}
         savedStability={dailyLog?.tdmsStability ?? null}
-        savedPssScore={dailyLog?.pssScore ?? null}
         legacyPanasPositive={dailyLog?.panasPositive ?? null}
         legacyPanasNegative={dailyLog?.panasNegative ?? null}
       />

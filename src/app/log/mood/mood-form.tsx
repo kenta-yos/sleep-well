@@ -8,7 +8,6 @@ import {
   TDMS_ANCHORS,
   TDMS_RANGE,
   scoreTdms,
-  pssBandLabel,
   type TdmsAnswers,
 } from "@/lib/assessments/scales";
 import { saveMoodLog, clearMoodLog } from "@/actions/log-actions";
@@ -21,7 +20,6 @@ export function MoodForm({
   initialTdms,
   savedVitality,
   savedStability,
-  savedPssScore,
   legacyPanasPositive,
   legacyPanasNegative,
 }: {
@@ -29,8 +27,6 @@ export function MoodForm({
   initialTdms: Record<string, number> | null;
   savedVitality: number | null;
   savedStability: number | null;
-  /** PSS-10 input was retired in 2026-09; past scores still render. */
-  savedPssScore: number | null;
   /** Days logged before 2026-09 hold I-PANAS-SF instead. Read-only. */
   legacyPanasPositive: number | null;
   legacyPanasNegative: number | null;
@@ -105,18 +101,6 @@ export function MoodForm({
               max={TDMS_RANGE.arousal.max}
             />
           </div>
-
-          {savedPssScore != null && (
-            <div className="flex items-baseline justify-between border-t border-border pt-3">
-              <p className="text-[10px] text-text-muted">知覚ストレス（PSS-10）</p>
-              <p className="text-sm font-semibold tabular-nums">
-                {savedPssScore}
-                <span className="ml-1 text-[10px] font-normal text-text-muted">
-                  / 40・{pssBandLabel(savedPssScore)}
-                </span>
-              </p>
-            </div>
-          )}
         </div>
 
         <button

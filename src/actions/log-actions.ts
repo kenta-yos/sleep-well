@@ -110,9 +110,6 @@ export async function clearMoodLog(date: string) {
       panasAnswers: null,
       panasPositive: null,
       panasNegative: null,
-      pssAnswers: null,
-      pssScore: null,
-      pssWindow: null,
       updatedAt: new Date(),
     })
     .where(eq(dailyLogs.date, date));

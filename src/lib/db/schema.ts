@@ -55,9 +55,6 @@ export const dailyLogs = pgTable(
     panasAnswers: json("panas_answers"),
     panasPositive: integer("panas_positive"),
     panasNegative: integer("panas_negative"),
-    pssAnswers: json("pss_answers"),
-    pssScore: integer("pss_score"),
-    pssWindow: text("pss_window"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   },
@@ -122,6 +119,4 @@ export type TrendsLog = Pick<
   | "stressSources"
   | "tdmsVitality"
   | "tdmsStability"
-  // Input retired in 2026-09, but the three recorded months still plot.
-  | "pssScore"
 >;

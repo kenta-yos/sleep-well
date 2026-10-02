@@ -78,8 +78,6 @@ interface MonthData {
   stressAvg: number | null;
   /** TDMS 快適度 = 活性度 + 安定度（2026-09〜）。 */
   tdmsPleasure: number | null;
-  /** PSS-10（0-40）。翌月1日に回答した値を、対象月に置いている。 */
-  pssScore: number | null;
   days: number;
 }
 
@@ -116,19 +114,6 @@ export function MonthlyOverview({
     const arr = logsByMonth.get(key) ?? [];
     arr.push(l);
     logsByMonth.set(key, arr);
-  }
-
-  // PSS-10 asked about "この1ヶ月" and was answered on the 1st, so a score
-  // stored on 2026-09-01 describes August. Bucket it under the month it
-  // actually refers to, otherwise it sits a month to the right of every
-  // other series here.
-  const pssByMonth = new Map<string, number>();
-  for (const l of dailyLogs) {
-    if (l.pssScore == null) continue;
-    const [y, m] = l.date.slice(0, 7).split("-").map(Number);
-    const d = new Date(y, m - 2, 1); // previous month
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    pssByMonth.set(key, l.pssScore);
   }
 
   const allMonths = new Set([...sleepByMonth.keys(), ...logsByMonth.keys()]);
@@ -169,7 +154,6 @@ export function MonthlyOverview({
       freshnessAvg: avg(freshness),
       stressAvg: avg(stressTotals),
       tdmsPleasure: avg(tdmsPleasures),
-      pssScore: pssByMonth.get(key) ?? null,
       days: Math.max(sleep.length, logs.length),
     };
   });
@@ -182,7 +166,6 @@ export function MonthlyOverview({
     freshness: m.freshnessAvg != null ? +m.freshnessAvg.toFixed(1) : null,
     stress: m.stressAvg != null ? +m.stressAvg.toFixed(1) : null,
     pleasure: m.tdmsPleasure != null ? +m.tdmsPleasure.toFixed(1) : null,
-    pss: m.pssScore != null ? Math.round(m.pssScore) : null,
   }));
 
   // Stress by category per month
@@ -242,16 +225,6 @@ export function MonthlyOverview({
             dataKey="pleasure"
             color="oklch(0.72 0.17 155)"
             unit=""
-          />
-        )}
-        {chartData.some((d) => d.pss != null) && (
-          <MiniChart
-            title="知覚ストレス PSS-10（翌月1日に回答・8月分で終了）"
-            data={chartData}
-            dataKey="pss"
-            color="oklch(0.65 0.18 300)"
-            unit="/40"
-            domain={[0, 40]}
           />
         )}
       </div>
