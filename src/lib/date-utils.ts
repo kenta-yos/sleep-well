@@ -34,3 +34,20 @@ export function getEffectiveToday(): string {
   return getJSTHour() < 4 ? getYesterdayJST() : getTodayJST();
 }
 
+/** "2026-10-17" → "2026-10-01" */
+export function monthStart(date: string): string {
+  return `${date.slice(0, 7)}-01`;
+}
+
+/** "2026-10-17" → "2026-11-01" */
+export function nextMonthStart(date: string): string {
+  const [y, m] = date.split("-").map(Number);
+  return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+}
+
+/** Days left in the month after `date` (0 on the last day). */
+export function daysLeftInMonth(date: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return lastDay - d;
+}

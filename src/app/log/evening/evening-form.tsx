@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef, useCallback } from "react";
+import { useState, useTransition, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { StressSources } from "@/components/log/stress-sources";
 import { HabitToggle } from "@/components/log/habit-toggle";
@@ -53,9 +53,12 @@ type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
 export function EveningForm({
   date,
   initialData,
+  extra,
 }: {
   date: string;
   initialData: FormData | null;
+  /** Rendered above the save button, e.g. the month-end goals editor. */
+  extra?: ReactNode;
 }) {
   const [data, setData] = useState<FormData>(initialData ?? EMPTY);
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -233,6 +236,8 @@ export function EveningForm({
           ))}
         </div>
       </div>
+
+      {extra}
 
       <button
         onClick={handleSave}

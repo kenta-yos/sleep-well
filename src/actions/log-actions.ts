@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { dailyLogs } from "@/lib/db/schema";
+import { dailyLogs, monthlyGoals } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export async function saveFreshnessScore(date: string, score: number) {
@@ -135,5 +135,18 @@ export async function clearEveningLog(date: string) {
       updatedAt: new Date(),
     })
     .where(eq(dailyLogs.date, date));
+  return { ok: true };
+}
+
+/** `month` is the month's 1st. Blank lines are dropped; an empty list clears the month. */
+export async function saveMonthlyGoals(month: string, goals: string[]) {
+  const cleaned = goals.map((g) => g.trim()).filter(Boolean);
+  await db
+    .insert(monthlyGoals)
+    .values({ month, goals: cleaned })
+    .onConflictDoUpdate({
+      target: monthlyGoals.month,
+      set: { goals: sql`excluded.goals`, updatedAt: sql`now()` },
+    });
   return { ok: true };
 }

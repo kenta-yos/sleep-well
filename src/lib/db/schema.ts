@@ -78,6 +78,19 @@ export const aiInsights = pgTable(
   (table) => [uniqueIndex("ai_insights_date_type_idx").on(table.date, table.type)]
 );
 
+// 月末の夜ログで登録する翌月の目標。夜ログを書くたびに目に入るよう表示する。
+export const monthlyGoals = pgTable(
+  "monthly_goals",
+  {
+    id: serial("id").primaryKey(),
+    month: date("month").notNull(), // the month's 1st
+    goals: json("goals").$type<string[]>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [uniqueIndex("monthly_goals_month_idx").on(table.month)]
+);
+
 // Types
 export type SleepRecord = typeof sleepRecords.$inferSelect;
 export type NewSleepRecord = typeof sleepRecords.$inferInsert;

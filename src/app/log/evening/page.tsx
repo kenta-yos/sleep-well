@@ -1,7 +1,14 @@
 import Link from "next/link";
-import { getEffectiveToday, formatDateJP } from "@/lib/date-utils";
-import { getDailyLogByDate } from "@/lib/db/queries";
+import {
+  getEffectiveToday,
+  formatDateJP,
+  monthStart,
+  nextMonthStart,
+  daysLeftInMonth,
+} from "@/lib/date-utils";
+import { getDailyLogByDate, getMonthlyGoals } from "@/lib/db/queries";
 import { DateNav } from "@/components/ui/date-nav";
+import { GoalsCard, GoalsEditor } from "@/components/log/monthly-goals";
 import { EveningForm } from "./evening-form";
 
 export default async function EveningPage({
@@ -13,7 +20,23 @@ export default async function EveningPage({
   const today = getEffectiveToday();
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
 
-  const dailyLog = await getDailyLogByDate(date);
+  // Goals for next month are set during the month's last week. The first
+  // week also opens this month's goals, for a month-end that slipped by.
+  const thisMonth = monthStart(date);
+  const editMonth =
+    daysLeftInMonth(date) < 7
+      ? nextMonthStart(date)
+      : Number(date.slice(8)) <= 7
+        ? thisMonth
+        : null;
+
+  const [dailyLog, goals, editGoals] = await Promise.all([
+    getDailyLogByDate(date),
+    getMonthlyGoals(thisMonth),
+    editMonth && editMonth !== thisMonth ? getMonthlyGoals(editMonth) : null,
+  ]);
+
+  const monthLabel = (m: string) => `${Number(m.slice(5, 7))}月`;
 
   return (
     <div className="space-y-6">
@@ -40,6 +63,8 @@ export default async function EveningPage({
         0時を過ぎても4時までは前日の夜ログとして開きます。書いた内容は自動で保存されます。
       </p>
 
+      <GoalsCard label={`${monthLabel(thisMonth)}の目標`} goals={goals} />
+
       <EveningForm
         key={date}
         date={date}
@@ -57,6 +82,24 @@ export default async function EveningPage({
                 note: dailyLog.note ?? "",
               }
             : null
+        }
+        extra={
+          editMonth && (
+            <GoalsEditor
+              month={editMonth}
+              title={
+                editMonth === thisMonth
+                  ? `今月（${monthLabel(editMonth)}）の目標`
+                  : `来月（${monthLabel(editMonth)}）の目標`
+              }
+              hint={
+                editMonth === thisMonth
+                  ? "月初の1週間は今月の目標を見直せます。"
+                  : "来月の目標をいくつか決めておきましょう。来月の夜ログに毎日表示されます。"
+              }
+              initialGoals={editGoals ?? goals}
+            />
+          )
         }
       />
     </div>

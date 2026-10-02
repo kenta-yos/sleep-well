@@ -1,5 +1,5 @@
 import { db } from "./index";
-import { sleepRecords, dailyLogs, aiInsights } from "./schema";
+import { sleepRecords, dailyLogs, aiInsights, monthlyGoals } from "./schema";
 import type { TrendsSleep } from "./schema";
 import { eq, desc, gte, lte, and, sql } from "drizzle-orm";
 
@@ -155,4 +155,14 @@ export async function getMonthlyData(year: number, month: number) {
     .orderBy(sleepRecords.date);
 
   return { sleep, logs };
+}
+
+// Monthly Goals
+/** `month` is the month's 1st ("YYYY-MM-01"). */
+export async function getMonthlyGoals(month: string): Promise<string[]> {
+  const [row] = await db
+    .select({ goals: monthlyGoals.goals })
+    .from(monthlyGoals)
+    .where(eq(monthlyGoals.month, month));
+  return row?.goals ?? [];
 }
