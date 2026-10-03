@@ -165,11 +165,13 @@ async function CalendarView({ month, today }: { month: string; today: string }) 
 async function DayView({ date, today }: { date: string; today: string }) {
   const past1 = monthsAgo(date, 1);
   const past3 = monthsAgo(date, 3);
-  const [sleep, log, log1, log3] = await Promise.all([
+  const past6 = monthsAgo(date, 6);
+  const [sleep, log, log1, log3, log6] = await Promise.all([
     getSleepRecordByDate(date),
     getDailyLogByDate(date),
     getDailyLogByDate(past1),
     getDailyLogByDate(past3),
+    getDailyLogByDate(past6),
   ]);
 
   const [y, m, d] = date.split("-").map(Number);
@@ -351,6 +353,7 @@ async function DayView({ date, today }: { date: string; today: string }) {
         entries={[
           { label: "1ヶ月前", date: past1, note: log1?.note },
           { label: "3ヶ月前", date: past3, note: log3?.note },
+          { label: "半年前", date: past6, note: log6?.note },
         ]}
       />
 

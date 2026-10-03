@@ -56,10 +56,11 @@ export default async function HomePage() {
   const window = checkinWindow(hour);
   const oneMonthAgo = monthsAgo(today, 1);
   const threeMonthsAgo = monthsAgo(today, 3);
+  const sixMonthsAgo = monthsAgo(today, 6);
   const thisMonth = monthStart(today);
   const nextMonth = daysLeftInMonth(today) < 3 ? nextMonthStart(today) : null;
 
-  const [sleep, log, totalCount, goals, nextGoals, past1, past3] = await Promise.all([
+  const [sleep, log, totalCount, goals, nextGoals, past1, past3, past6] = await Promise.all([
     getSleepRecordByDate(today),
     getDailyLogByDate(today),
     getSleepRecordCount(),
@@ -67,6 +68,7 @@ export default async function HomePage() {
     nextMonth ? getMonthlyGoals(nextMonth) : null,
     getDailyLogByDate(oneMonthAgo),
     getDailyLogByDate(threeMonthsAgo),
+    getDailyLogByDate(sixMonthsAgo),
   ]);
 
   if (totalCount === 0) {
@@ -165,8 +167,8 @@ export default async function HomePage() {
         entries={[
           { label: "1ヶ月前", date: oneMonthAgo, log: past1 },
           { label: "3ヶ月前", date: threeMonthsAgo, log: past3 },
+          { label: "半年前", date: sixMonthsAgo, log: past6 },
         ]}
-        roomy={window === null}
       />
     </div>
   );
@@ -306,10 +308,8 @@ function TodayCard({
 
 function PastDiaries({
   entries,
-  roomy,
 }: {
   entries: { label: string; date: string; log: DailyLog | null }[];
-  roomy: boolean;
 }) {
   const shown = entries.filter((e) => e.log?.note?.trim());
   if (shown.length === 0) return null;
@@ -317,8 +317,7 @@ function PastDiaries({
   return (
     <div className="space-y-2">
       <p className="text-xs text-text-muted">あの日の日記</p>
-      {/* In the daytime there is time to read, so the excerpts get longer. */}
-      <div className={roomy ? "space-y-2" : "grid grid-cols-2 gap-2"}>
+      <div className="space-y-2">
         {shown.map((e) => (
           <Link
             key={e.date}
@@ -328,11 +327,7 @@ function PastDiaries({
             <span className="text-[11px] text-text-muted">
               {e.label}・{formatDateJP(e.date)}
             </span>
-            <span
-              className={`${roomy ? "line-clamp-4 text-[13px]" : "line-clamp-3 text-xs"} leading-relaxed`}
-            >
-              {e.log!.note}
-            </span>
+            <span className="line-clamp-3 text-[13px] leading-relaxed">{e.log!.note}</span>
           </Link>
         ))}
       </div>
